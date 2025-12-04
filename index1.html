@@ -1,0 +1,5489 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gods Unchained Collection Valuator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script type="module" src="/orderbook-integration.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0f1a;
+        --panel: rgba(15, 23, 42, 0.95);
+        --border: rgba(255, 255, 255, 0.08);
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --accent: #7dd3fc;
+        --accent-2: #60a5fa;
+        --success: #4ade80;
+        --warning: #fbbf24;
+        --danger: #f87171;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        line-height: 1.5;
+      }
+
+      /* Header */
+            .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: var(--panel);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        z-index: 1000;
+        gap: 16px;
+      }
+
+      .header-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .header-logo-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, #36373a, #27252b);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
+
+      .header-logo-text {
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+            .header-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      /* Main Container */
+      .main-container {
+        margin-top: 60px;
+        padding: 24px;
+        max-width: 1600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* Search Section */
+            .search-section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+      }
+
+      .search-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .search-input {
+        flex: 1;
+        padding: 12px 16px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        transition: all 0.2s;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+      }
+
+      .search-input::placeholder {
+        color: var(--muted);
+      }
+
+      .btn {
+        padding: 12px 20px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .btn.primary {
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        color: #07102a;
+        border: none;
+        font-weight: 600;
+      }
+
+      .btn.primary:hover {
+        opacity: 0.9;
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Filters */
+            .filters-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        align-items: center;
+        padding: 4px 0;
+      }
+
+            .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .filter-label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+
+      .filter-select {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        font-size: 13px;
+        font-family: inherit;
+        cursor: pointer;
+        min-width: 120px;
+      }
+
+      /* FIX: Dropdown option text visibility */
+      .filter-select option {
+        background: #1e293b;
+        color: var(--text);
+        padding: 8px;
+      }
+
+      .filter-select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      
+      .checkbox-filter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+        justify-content: center;
+      }
+
+      .checkbox-filter:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .checkbox-filter.active {
+        background: rgba(96, 165, 250, 0.15);
+        border-color: var(--accent);
+      }
+
+      .checkbox-filter input {
+        cursor: pointer;
+      }
+
+      .checkbox-filter span {
+        font-size: 13px;
+        color: var(--text);
+      }
+
+      /* Summary Cards */
+      .summary-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .summary-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .summary-label {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+      }
+
+      .summary-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .summary-value.success {
+        color: var(--success);
+      }
+
+      .summary-value.accent {
+        color: var(--accent);
+      }
+
+      .summary-value.warning {
+        color: var(--warning);
+      }
+
+      .summary-sublabel {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+
+      /* View Controls */
+      .view-controls {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .view-switcher {
+        display: flex;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 4px;
+        border-radius: 8px;
+      }
+
+      .view-btn {
+        padding: 8px 16px;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .view-btn:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .view-btn.active {
+        background: var(--accent);
+        color: #07102a;
+      }
+
+      /* Cards Grid */
+      .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .cards-grid.hidden {
+        display: none;
+      }
+
+      .card-item {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+
+      .card-item:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 16px; /* Increased gap */
+        margin-bottom: 16px;
+      }
+
+      .card-image {
+        width: 120px; /* Increased from 60px */
+        height: 120px; /* Increased from 60px */
+        border-radius: 8px;
+        object-fit: cover;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+      }
+
+      .card-info {
+        flex: 1;
+      }
+
+      .card-name {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+
+      .card-meta {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .card-stats {
+        display: grid;
+        gap: 8px;
+      }
+
+      .card-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+      }
+
+      .card-stat-label {
+        color: var(--muted);
+      }
+
+      .card-stat-value {
+        font-weight: 600;
+      }
+
+      /* Cards List */
+      .cards-list {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        display: none;
+      }
+
+      .cards-list.active {
+        display: block;
+      }
+
+      .cards-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .cards-table thead {
+        background: rgba(255, 255, 255, 0.02);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .cards-table th {
+        padding: 14px 16px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+      }
+
+      .cards-table th:hover {
+        color: var(--accent);
+        background: rgba(125, 211, 252, 0.05);
+      }
+
+      .cards-table th.sortable::after {
+        content: "⇅";
+        position: absolute;
+        right: 8px;
+        opacity: 0.3;
+        font-size: 12px;
+      }
+
+      .cards-table th.sorted-asc::after {
+        content: "↑";
+        opacity: 1;
+        color: var(--accent);
+      }
+
+      .cards-table th.sorted-desc::after {
+        content: "↓";
+        opacity: 1;
+        color: var(--accent);
+      }
+
+      .cards-table tbody tr {
+        border-bottom: 1px solid var(--border);
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+
+      .cards-table tbody tr:hover {
+        background: rgba(125, 211, 252, 0.05);
+      }
+
+      .cards-table td {
+        padding: 12px 16px;
+        font-size: 13px;
+      }
+
+      .card-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      .status-badge.lowest {
+        background: rgba(74, 222, 128, 0.15);
+        color: var(--success);
+      }
+
+      .status-badge.undercut {
+        background: rgba(251, 191, 36, 0.15);
+        color: var(--warning);
+      }
+
+      /* Loading State */
+      .loading-state {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        text-align: center;
+      }
+
+      .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 16px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading-text {
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      /* Modal */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 200px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+
+      .modal.active {
+        display: flex;
+      }
+
+      .modal-content {
+        background: rgb(13 19 34);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .modal-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-title {
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s;
+      }
+
+      .modal-close:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+      }
+
+      .modal-body {
+        padding: 24px;
+      }
+
+      .detail-section {
+        margin-bottom: 24px;
+      }
+
+      .detail-section:last-child {
+        margin-bottom: 0;
+      }
+
+      .detail-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .detail-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 6px;
+        font-size: 13px;
+      }
+
+      .detail-item span:first-child {
+        color: var(--muted);
+      }
+
+      .detail-price {
+        font-weight: 600;
+        color: var(--accent);
+      }
+
+      .detail-address {
+        font-family: monospace;
+        font-size: 12px;
+      }
+      .collection-item {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .collection-item:hover {
+        border-color: var(--accent);
+        background: rgba(125, 211, 252, 0.05);
+      }
+
+      .collection-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+      }
+
+      .collection-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .collection-wallet {
+        font-size: 12px;
+        color: var(--muted);
+        font-family: monospace;
+      }
+
+      .collection-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .collection-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .collection-stat {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .collection-stat-label {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      .collection-stat-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+
+      .empty-collections {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--muted);
+      }
+
+      .empty-collections-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+
+      .button-spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(7, 16, 42, 0.3);
+        border-top-color: #07102a;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        vertical-align: middle;
+        margin-right: 4px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      #priceHistoryChart {
+        max-height: 250px;
+      }
+
+      .detail-section canvas {
+        border-radius: 8px;
+      }
+      .info-icon-wrapper {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .info-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .info-icon:hover {
+        transform: translateY(-4px) scale(1.1);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      }
+
+      .info-tooltip {
+        position: absolute;
+        top: -60px;
+        background: rgba(15, 23, 42, 0.98);
+        border: 1px solid var(--border);
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        pointer-events: none;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      }
+
+      .info-tooltip strong {
+        color: var(--text);
+        display: block;
+        margin-top: 2px;
+        font-size: 13px;
+      }
+
+      .info-tooltip::after {
+        content: "";
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 6px solid rgba(15, 23, 42, 0.98);
+      }
+
+      .info-icon-wrapper:hover .info-tooltip {
+        opacity: 1;
+        visibility: visible;
+        top: -70px;
+      }
+      .copyable {
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        padding-right: 24px;
+      }
+
+      .copyable:hover {
+        color: var(--accent) !important;
+      }
+
+      .copy-icon {
+        font-size: 14px;
+        margin-left: 6px;
+        opacity: 0.5;
+        transition: all 0.2s;
+      }
+
+      .copyable:hover .copy-icon {
+        opacity: 1;
+      }
+
+      .copy-tooltip {
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--success);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+        z-index: 1000;
+        animation: fadeInOut 2s ease;
+      }
+
+      @keyframes fadeInOut {
+        0% {
+          opacity: 0;
+          transform: translateX(-50%) translateY(5px);
+        }
+        20% {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+        80% {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+        100% {
+          opacity: 0;
+          transform: translateX(-50%) translateY(-5px);
+        }
+      }
+
+      .detail-address {
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+      }
+      /* ============================================
+   CARD SELECTION FEATURE - CSS ADDITIONS
+   Add these styles to your existing <style> section
+   ============================================ */
+
+      /* Selection Controls Bar */
+      .selection-controls {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .selection-count {
+        font-size: 14px;
+        color: var(--text);
+        font-weight: 600;
+        padding: 8px 16px;
+        background: rgba(125, 211, 252, 0.1);
+        border: 1px solid rgba(125, 211, 252, 0.3);
+        border-radius: 8px;
+      }
+
+      .selection-actions {
+        display: flex;
+        gap: 12px;
+        flex: 1;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      /* Card Checkbox */
+      .card-checkbox {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        z-index: 10;
+        accent-color: var(--accent);
+      }
+
+      .card-checkbox:checked {
+        transform: scale(1.1);
+      }
+
+      /* Table Checkbox Column */
+      .card-cell-checkbox {
+        width: 40px !important;
+        min-width: 40px !important;
+        max-width: 40px !important;
+        text-align: center;
+        padding: 8px !important;
+        vertical-align: middle;
+      }
+
+      .card-cell-checkbox input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(--accent);
+      }
+
+      /* Selected State for Grid Cards */
+      .card.selected {
+        border: 2px solid var(--accent);
+        box-shadow: 0 0 20px rgba(125, 211, 252, 0.3);
+        transform: translateY(-2px);
+      }
+
+      /* Selected State for Table Rows */
+      tr.selected {
+        background: rgba(125, 211, 252, 0.1) !important;
+        border-left: 3px solid var(--accent);
+      }
+
+      /* Market Data Modal */
+      .market-data-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      .market-data-modal.active {
+        display: flex;
+      }
+
+      .market-data-content {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 32px;
+        max-width: 95%;
+        max-height: 90vh;
+        overflow-y: auto;
+        width: 1200px;
+      }
+
+      .market-data-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+
+      .market-data-header h2 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .market-data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      .market-data-table th {
+        background: rgba(255, 255, 255, 0.03);
+        padding: 12px;
+        text-align: left;
+        font-size: 12px;
+        text-transform: uppercase;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+        font-weight: 600;
+      }
+
+      .market-data-table td {
+        padding: 16px 12px;
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+      }
+
+      .market-data-table tr:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .copy-btn-small {
+        padding: 4px 8px;
+        font-size: 11px;
+        background: rgba(125, 211, 252, 0.1);
+        border: 1px solid rgba(125, 211, 252, 0.3);
+        border-radius: 4px;
+        color: var(--accent);
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        font-family: inherit;
+      }
+
+      .copy-btn-small:hover {
+        background: rgba(125, 211, 252, 0.2);
+      }
+
+      /* Copy feedback animation */
+      @keyframes slideIn {
+        from {
+          transform: translateX(100px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      /* ==================== SELECTION CONTROLS STYLES ==================== */
+      .selection-controls {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .selection-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+      }
+
+      .selection-counter {
+        padding: 8px 16px;
+        background: rgba(125, 211, 252, 0.1);
+        border: 1px solid var(--accent);
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+
+      .selection-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .btn-select {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-select:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .btn-select.primary {
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        color: #07102a;
+        border: none;
+      }
+
+      .btn-select.danger {
+        background: var(--danger);
+        color: white;
+        border: none;
+      }
+
+      .btn-select.success {
+        background: var(--success);
+        color: #07102a;
+        border: none;
+      }
+
+      .btn-select:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* CARD CHECKBOX STYLES */
+      .card-checkbox {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        z-index: 10;
+        appearance: none;
+        background: rgba(15, 23, 42, 0.95);
+        border: 2px solid var(--border);
+        border-radius: 4px;
+        transition: all 0.2s;
+      }
+
+      .card-checkbox:checked {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+
+      .card-checkbox:checked::after {
+        content: "✓";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #07102a;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .card-checkbox:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.1);
+      }
+
+      .card-item.selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.2);
+        background: rgba(125, 211, 252, 0.03);
+      }
+
+      /* List view checkbox */
+      .list-checkbox {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        position: relative;
+        appearance: none;
+        background: rgba(15, 23, 42, 0.95);
+        border: 2px solid var(--border);
+        border-radius: 4px;
+        transition: all 0.2s;
+      }
+
+      .list-checkbox:checked {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+
+      .list-checkbox:checked::after {
+        content: "✓";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #07102a;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .list-checkbox:hover {
+        border-color: var(--accent);
+      }
+      /* Wallet portforlio */
+      .portfolio-btn {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: rgba(125, 211, 252, 0.1);
+        border: 1px solid rgba(125, 211, 252, 0.2);
+        border-radius: 8px;
+        color: var(--accent);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .portfolio-btn:hover {
+        background: rgba(125, 211, 252, 0.15);
+        border-color: rgba(125, 211, 252, 0.3);
+      }
+
+      .portfolio-value {
+        color: var(--text);
+        margin-left: 4px;
+      }
+
+            .portfolio-dropdown {
+        position: fixed;
+        top: 70px;
+        right: 24px;
+        min-width: 420px;
+        max-width: 500px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        display: none;
+        z-index: 1001;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+      }
+
+      .portfolio-dropdown.active {
+        display: block;
+      }
+
+      .portfolio-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .portfolio-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .portfolio-summary {
+        background: rgba(125, 211, 252, 0.05);
+        border: 1px solid rgba(125, 211, 252, 0.1);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 16px;
+      }
+
+      .portfolio-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .portfolio-stat:last-child {
+        margin-bottom: 0;
+      }
+
+      .portfolio-stat-label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .portfolio-stat-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .portfolio-stat-value.highlight {
+        color: var(--accent);
+        font-size: 18px;
+      }
+
+      .wallet-list {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-bottom: 12px;
+      }
+
+      .wallet-item {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .wallet-item:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(125, 211, 252, 0.3);
+      }
+
+      .wallet-item.loading {
+        opacity: 0.6;
+        cursor: wait;
+      }
+
+      .wallet-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .wallet-nickname {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .wallet-primary-badge {
+        padding: 2px 8px;
+        background: rgba(125, 211, 252, 0.2);
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--accent);
+        text-transform: uppercase;
+      }
+
+      .wallet-address {
+        font-size: 12px;
+        color: var(--muted);
+        font-family: monospace;
+        margin-bottom: 8px;
+      }
+
+      .wallet-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .wallet-tokens {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .wallet-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--success);
+      }
+
+      .wallet-actions {
+        display: flex;
+        gap: 4px;
+        margin-top: 8px;
+      }
+
+      .wallet-action-btn {
+        flex: 1;
+        padding: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--muted);
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .wallet-action-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text);
+        border-color: rgba(125, 211, 252, 0.3);
+      }
+
+      .portfolio-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .portfolio-action-btn {
+        padding: 10px;
+        background: rgba(125, 211, 252, 0.1);
+        border: 1px solid rgba(125, 211, 252, 0.2);
+        border-radius: 8px;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .portfolio-action-btn:hover {
+        background: rgba(125, 211, 252, 0.15);
+        border-color: rgba(125, 211, 252, 0.3);
+      }
+
+      .portfolio-action-btn.primary {
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        color: #07102a;
+        border: none;
+      }
+
+      .portfolio-action-btn.primary:hover {
+        opacity: 0.9;
+      }
+
+      .empty-wallets {
+        text-align: center;
+        padding: 32px 16px;
+        color: var(--muted);
+      }
+
+      .empty-wallets-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+      }
+
+      .empty-wallets-text {
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+
+      /* Add Wallet Modal */
+      .add-wallet-modal .modal-content {
+        max-width: 500px;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 10px 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        transition: all 0.2s;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.1);
+      }
+
+      .form-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+
+      .form-checkbox input {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .modal-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .modal-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .modal-btn.primary {
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        color: #07102a;
+        border: none;
+      }
+
+      .modal-btn.primary:hover {
+        opacity: 0.9;
+      }
+
+      .refresh-spinner {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: var(--text);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-right: 4px;
+      }
+
+      /* Wallet Details Modal */
+      .wallet-details-modal .modal-content {
+        max-width: 700px;
+      }
+
+      .token-list {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .token-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 8px;
+      }
+
+      .token-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .token-info {
+        flex: 1;
+      }
+
+      .token-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .token-symbol {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .token-values {
+        text-align: right;
+      }
+
+      .token-balance {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .token-usd {
+        font-size: 12px;
+        color: var(--success);
+      }
+
+
+      .portfolio-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(2px);
+        z-index: 1000;
+        display: none;
+      }
+      
+      .portfolio-overlay.active {
+        display: block;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 1200px) {
+        .header-right {
+          gap: 6px;
+        }
+        
+        .btn {
+          padding: 10px 14px;
+          font-size: 13px;
+        }
+        
+        .portfolio-dropdown {
+          right: 12px;
+          min-width: 360px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .filters-row {
+          grid-template-columns: 1fr 1fr;
+        }
+        
+        .portfolio-dropdown {
+          right: 12px;
+          left: 12px;
+          min-width: auto;
+        }
+        
+        .header-right span {
+          display: none;
+        }
+      }
+      .btn-select.warning {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+  color: #000 !important;
+  font-weight: 600;
+}
+
+.btn-select.warning:hover {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+}
+
+@keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+          transform: scale(1);
+        }
+        to {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="portfolio-overlay" id="portfolioOverlay" onclick="closePortfolioDropdown()"></div>
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-logo">
+        <div class="header-logo-icon">⚔️</div>
+        <div class="header-logo-text">GU Valuator</div>
+      </div>
+      <div class="header-right">
+        <span style="margin-right: 16px; color: var(--muted); font-size: 14px">
+          Welcome, <strong id="username"></strong>
+        </span>
+        <button class="btn" onclick="viewSalesHistory()">
+          💰 Sales History
+        </button>
+        <button class="btn" onclick="showSavedCollections()">
+          📁 My Collections
+        </button>
+        <button class="btn" onclick="refreshPrices()">🔄 Refresh Prices</button>
+
+        <button class="portfolio-btn" onclick="togglePortfolioDropdown()">
+          💼 Portfolio
+          <span class="portfolio-value" id="totalPortfolioValue">$0.00</span>
+        </button>
+
+          <div class="portfolio-dropdown" id="portfolioDropdown">
+            <div class="portfolio-header">
+              <div class="portfolio-title">My Wallets</div>
+              <button class="modal-close" onclick="closePortfolioDropdown()">
+                ×
+              </button>
+            </div>
+
+            <div class="portfolio-summary" id="portfolioSummary">
+              <div class="portfolio-stat">
+                <span class="portfolio-stat-label">Total Value</span>
+                <span
+                  class="portfolio-stat-value highlight"
+                  id="dropdownTotalValue"
+                  >$0.00</span
+                >
+              </div>
+              <div class="portfolio-stat">
+                <span class="portfolio-stat-label">Wallets</span>
+                <span class="portfolio-stat-value" id="totalWallets">0</span>
+              </div>
+              <div class="portfolio-stat">
+                <span class="portfolio-stat-label">Tokens</span>
+                <span class="portfolio-stat-value" id="totalTokens">0</span>
+              </div>
+            </div>
+
+            <div class="wallet-list" id="walletList">
+              <!-- Wallets will be inserted here -->
+            </div>
+
+            <div class="portfolio-actions">
+              <button
+                class="portfolio-action-btn primary"
+                onclick="openAddWalletModal()"
+              >
+                ➕ Add Wallet
+              </button>
+              <button
+                class="portfolio-action-btn"
+                onclick="refreshAllWallets()"
+              >
+                🔄 Refresh All
+              </button>
+            </div>
+          </div>
+        </button>
+
+        <!-- Add Wallet Modal -->
+        <div class="modal add-wallet-modal" id="addWalletModal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <div class="modal-title">Add New Wallet</div>
+
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Wallet Address *</label>
+                <input
+                  type="text"
+                  id="newWalletAddress"
+                  class="form-input"
+                  placeholder="0x..."
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nickname (optional)</label>
+                <input
+                  type="text"
+                  id="newWalletNickname"
+                  class="form-input"
+                  placeholder="e.g., Main Wallet, Trading Wallet"
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-checkbox">
+                  <input type="checkbox" id="newWalletPrimary" />
+                  <span class="form-label" style="margin: 0"
+                    >Set as primary wallet</span
+                  >
+                </label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn" onclick="closeAddWalletModal()">
+                Cancel
+              </button>
+              <button class="modal-btn primary" onclick="addNewWallet()">
+                Add Wallet
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wallet Details Modal -->
+        <div class="modal wallet-details-modal" id="walletDetailsModal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <div class="modal-title" id="walletDetailsTitle">
+                Wallet Details
+              </div>
+              <button class="modal-close" onclick="closeWalletDetailsModal()">
+                ×
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="detail-section">
+                <div class="detail-section-title">Token Balances</div>
+                <div class="token-list" id="tokenList">
+                  <!-- Tokens will be inserted here -->
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn" onclick="closeWalletDetailsModal()">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+        <button class="btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+      <!-- Search Section -->
+      <div class="search-section">
+        <div class="search-row">
+          <input
+            type="text"
+            id="walletInput"
+            class="search-input"
+            placeholder="Enter wallet address (e.g., 0x1b62138405dc5e90fe4017b39af1426a99fe6b92)"
+          />
+          <button id="loadBtn" class="btn primary" onclick="loadCollection()">
+            Load Collection
+          </button>
+        </div>
+
+        <div class="filters-row">
+          <div class="filter-group">
+            <span class="filter-label">God</span>
+            <select
+              id="godFilter"
+              class="filter-select"
+              onchange="applyFilters()"
+            >
+              <option value="">All Gods</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <span class="filter-label">Set</span>
+            <select
+              id="setFilter"
+              class="filter-select"
+              onchange="applyFilters()"
+            >
+              <option value="">All Sets</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <span class="filter-label">Rarity</span>
+            <select
+              id="rarityFilter"
+              class="filter-select"
+              onchange="applyFilters()"
+            >
+              <option value="">All Rarities</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <span class="filter-label">Quality</span>
+            <select
+              id="qualityFilter"
+              class="filter-select"
+              onchange="applyFilters()"
+            >
+              <option value="">All Qualities</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <span class="filter-label">Status</span>
+            <select
+              id="statusFilter"
+              class="filter-select"
+              onchange="applyFilters()"
+            >
+              <option value="">All Status</option>
+              <option value="lowest">Lowest</option>
+              <option value="undercut">Undercut</option>
+              <option value="none">No Listing</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Market</span>
+            <select
+              id="marketFilter"
+              class="filter-select"
+              onchange="applyFilters()"
+            >
+              <option value="">All Cards</option>
+              <option value="listed">Listed on Market</option>
+              <option value="not-listed">Not Listed</option>
+            </select>
+          </div>
+
+          <label class="checkbox-filter" id="hasListingFilter">
+            <input type="checkbox" onchange="applyFilters()" />
+            <span>Has Listing</span>
+          </label>
+
+          <label class="checkbox-filter" id="hasHistoricalFilter">
+            <input type="checkbox" onchange="applyFilters()" />
+            <span>Has Historical</span>
+          </label>
+
+          <label class="checkbox-filter" id="hasBidFilter">
+            <input type="checkbox" onchange="applyFilters()" />
+            <span>Has Bid</span>
+          </label>
+
+          <label class="checkbox-filter" id="noListingFilter">
+            <input type="checkbox" onchange="applyFilters()" />
+            <span>No Listing</span>
+          </label>
+
+          <label class="checkbox-filter" id="noHistoricalFilter">
+            <input type="checkbox" onchange="applyFilters()" />
+            <span>No Historical</span>
+          </label>
+
+          <label class="checkbox-filter" id="noBidFilter">
+            <input type="checkbox" onchange="applyFilters()" />
+            <span>No Bid</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Selection Controls -->
+      <div
+        id="selectionControls"
+        class="selection-controls"
+        style="display: flex"
+      >
+        <div class="selection-info">
+          <div class="selection-counter">
+            <span id="selectedCount">0</span> cards selected
+          </div>
+        </div>
+
+        <div class="selection-actions">
+          <button
+            class="btn-select"
+            onclick="selectAll()"
+            title="Select all filtered cards"
+          >
+            ✓ Select All
+          </button>
+          <button
+            class="btn-select"
+            onclick="deselectAll()"
+            title="Clear selection"
+          >
+            ✗ Deselect All
+          </button>
+          <button
+            class="btn-select"
+            onclick="selectFiltered('listed')"
+            title="Select only listed cards"
+          >
+            📋 Select Listed
+          </button>
+          <button
+            class="btn-select"
+            onclick="selectFiltered('not_listed')"
+            title="Select only unlisted cards"
+          >
+            📝 Select Unlisted
+          </button>
+          <button
+            class="btn-select primary"
+            onclick="getSelectedCardsData()"
+            id="getDataBtn"
+            title="Fetch detailed market data"
+          >
+            📊 Get Market Data
+          </button>
+          <button
+            class="btn-select success"
+            onclick="listSelectedCards()"
+            id="listCardsBtn"
+            title="List selected cards"
+          >
+            📤 List Cards
+          </button>
+          <button
+            class="btn-select danger"
+            onclick="cancelSelectedListings()"
+            id="cancelListingsBtn"
+            title="Cancel listings"
+          >
+            ✕ Cancel Listings
+          </button>
+          <button
+  class="btn-select warning"
+  onclick="relistUndercutCards()"
+  id="relistUndercutBtn"
+  title="Cancel undercut listings and relist them"
+  style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);"
+>
+  🔄 Relist Undercut
+</button>
+        </div>
+      </div>
+
+      <!-- Summary Section -->
+      <div id="summarySection" class="summary-section" style="display: none">
+        <div class="summary-card">
+          <div class="summary-label">Total Cards</div>
+          <div class="summary-value" id="totalCards">0</div>
+          <div class="summary-sublabel">
+            <span id="uniqueCards">0</span> unique
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Listing Value</div>
+          <div class="summary-value accent" id="listingValue">$0.00</div>
+          <div class="summary-sublabel">Floor prices</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Last Sold Value</div>
+          <div class="summary-value warning" id="lastSoldValue">$0.00</div>
+          <div class="summary-sublabel">Historical sales</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Bid Value</div>
+          <div class="summary-value success" id="bidValue">$0.00</div>
+          <div class="summary-sublabel">Highest offers</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Real Value</div>
+          <div class="summary-value" id="realValue">$0.00</div>
+          <div class="summary-sublabel">Min(listing, last sold)</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Avg Diff %</div>
+          <div class="summary-value" id="avgDiffPct">0%</div>
+          <div class="summary-sublabel">Low Bid vs High Bid</div>
+        </div>
+      </div>
+
+      <!-- View Controls -->
+      <div id="viewControls" class="view-controls" style="display: none">
+        <div style="display: flex; align-items: center; gap: 12px; flex: 1">
+          <input
+            type="text"
+            id="cardSearch"
+            class="search-input"
+            placeholder="🔍 Search cards by name..."
+            oninput="applyFilters()"
+            style="max-width: 300px"
+          />
+          <span style="font-size: 13px; color: var(--muted)">
+            Showing <span id="filteredCount">0</span> of
+            <span id="totalCount">0</span> cards
+          </span>
+          <button
+            class="btn"
+            onclick="saveCurrentCollection()"
+            style="margin-left: auto"
+          >
+            💾 Save Collection
+          </button>
+        </div>
+
+        <div class="view-switcher">
+          <button
+            id="gridBtn"
+            class="view-btn active"
+            onclick="setView('grid')"
+          >
+            Grid
+          </button>
+          <button id="listBtn" class="view-btn" onclick="setView('list')">
+            List
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="loading-state">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading collection...</div>
+      </div>
+
+      <!-- Cards Grid View -->
+      <div id="cardsGrid" class="cards-grid"></div>
+
+      <!-- Cards List View -->
+      <div id="cardsList" class="cards-list">
+        <table class="cards-table">
+          <thead>
+            <tr>
+              <!-- ADD THIS CHECKBOX COLUMN FIRST -->
+              <th
+                class="card-cell-checkbox"
+                style="width: 40px; min-width: 40px; padding: 8px"
+              >
+                <input
+                  type="checkbox"
+                  id="selectAllCheckbox"
+                  onchange="this.checked ? selectAll() : deselectAll()"
+                />
+              </th>
+
+              <!-- Your existing columns -->
+              <th class="sortable" onclick="sortTable('name')">Card</th>
+              <th class="sortable" onclick="sortTable('count')">Count</th>
+              <th class="sortable" onclick="sortTable('status')">Status</th>
+              <th class="sortable" onclick="sortTable('lowest_price')">
+                Floor Price
+              </th>
+              <th class="sortable" onclick="sortTable('last_sold')">
+                Last Sold
+              </th>
+              <th class="sortable" onclick="sortTable('highest_bid')">
+                Highest Bid
+              </th>
+              <th class="sortable" onclick="sortTable('real_value')">
+                Real Value
+              </th>
+              <th class="sortable" onclick="sortTable('bid_spread_pct')">
+                Spread %
+              </th>
+            </tr>
+          </thead>
+          <tbody id="cardsListBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Card Detail Modal -->
+    <div id="cardModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle" class="modal-title">Card Details</h2>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div id="modalBody" class="modal-body"></div>
+      </div>
+    </div>
+
+    <!-- Saved Collections Modal -->
+    <div id="savedCollectionsModal" class="modal">
+      <div class="modal-content" style="max-width: 800px">
+        <div class="modal-header">
+          <h2 class="modal-title">My Saved Collections</h2>
+          <button class="modal-close" onclick="closeSavedCollectionsModal()">
+            ×
+          </button>
+        </div>
+        <div class="modal-body" id="savedCollectionsBody">
+          <div
+            id="collectionsLoading"
+            style="text-align: center; padding: 40px"
+          >
+            <div class="spinner"></div>
+            <div style="margin-top: 16px; color: var(--muted)">
+              Loading collections...
+            </div>
+          </div>
+          <div id="collectionsList" style="display: none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Collection Name Modal -->
+    <!-- Save Collection Name Modal -->
+    <div id="saveCollectionModal" class="modal">
+      <div class="modal-content" style="max-width: 400px">
+        <div class="modal-header">
+          <h2 class="modal-title">Save Collection</h2>
+          <button class="modal-close" onclick="closeSaveModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom: 16px">
+            <label
+              style="
+                display: block;
+                margin-bottom: 8px;
+                font-size: 14px;
+                color: var(--muted);
+              "
+            >
+              Collection Name
+            </label>
+            <input
+              type="text"
+              id="collectionNameInput"
+              class="search-input"
+              placeholder="Enter a name for this collection..."
+              style="width: 100%"
+            />
+          </div>
+          <div style="display: flex; gap: 12px">
+            <button
+              class="btn"
+              onclick="closeSaveModal()"
+              style="background: transparent; border: 1px solid var(--border)"
+            >
+              Cancel
+            </button>
+            <button
+              class="btn primary"
+              onclick="confirmSaveCollection()"
+              id="saveCollectionBtn"
+            >
+              <span id="saveButtonText">Save</span>
+              <span id="saveButtonSpinner" style="display: none">
+                <span class="button-spinner"></span> Saving...
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Check if user is logged in
+      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user") || "null");
+
+      if (!token) {
+        window.location.href = "/login.html";
+      }
+
+      // Add logout button handler
+      function logout() {
+        fetch(`${API_BASE}/logout`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }).finally(() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "/login.html";
+        });
+      }
+      // Display username
+      document.getElementById("username").textContent = user.username;
+      const API_BASE = "http://127.0.0.1:5000/api";
+      let allCards = [];
+      const selectedCards = new Map(); // Selection tracking: key="proto_quality", value=card data
+      let filteredCards = [];
+      let currentView = "grid";
+      let currentSort = { column: null, direction: "asc" };
+
+      let currentCollectionData = null;
+      let currentSummaryData = null;
+      let currentWalletAddress = null;
+
+      // ==================== SELECTION SYSTEM ====================
+
+      function toggleCardSelection(cardKey, cardData, event) {
+        if (event) {
+          event.stopPropagation();
+        }
+
+        if (typeof cardData === "string") {
+          cardData = filteredCards.find(
+            (c) => `${c.proto}_${c.quality}` === cardKey
+          );
+        }
+
+        if (selectedCards.has(cardKey)) {
+          selectedCards.delete(cardKey);
+        } else {
+          selectedCards.set(cardKey, cardData);
+        }
+
+        updateSelectionUI();
+        updateCardCheckboxes();
+      }
+
+      function selectAll() {
+        filteredCards.forEach((card) => {
+          const cardKey = `${card.proto}_${card.quality}`;
+          selectedCards.set(cardKey, card);
+        });
+        updateSelectionUI();
+        updateCardCheckboxes();
+      }
+
+      function deselectAll() {
+        selectedCards.clear();
+        updateSelectionUI();
+        updateCardCheckboxes();
+      }
+
+      function selectFiltered(filter) {
+        filteredCards.forEach((card) => {
+          const cardKey = `${card.proto}_${card.quality}`;
+
+          if (filter === "listed" && card.is_listed_portion === true) {
+            selectedCards.set(cardKey, card);
+          } else if (
+            filter === "not_listed" &&
+            card.is_listed_portion === false
+          ) {
+            selectedCards.set(cardKey, card);
+          }
+        });
+        updateSelectionUI();
+        updateCardCheckboxes();
+      }
+
+      function updateSelectionUI() {
+        const count = selectedCards.size;
+        document.getElementById("selectedCount").textContent = count;
+
+        const controlsDiv = document.getElementById("selectionControls");
+        if (allCards.length > 0) {  
+          controlsDiv.style.display = "flex";
+        } else {
+          controlsDiv.style.display = "none";
+        }
+      }
+
+      function updateCardCheckboxes() {
+        document.querySelectorAll(".card-checkbox").forEach((checkbox) => {
+          const cardKey = checkbox.dataset.cardKey;
+          checkbox.checked = selectedCards.has(cardKey);
+
+          const cardItem = checkbox.closest(".card-item");
+          if (cardItem) {
+            if (selectedCards.has(cardKey)) {
+              cardItem.classList.add("selected");
+            } else {
+              cardItem.classList.remove("selected");
+            }
+          }
+        });
+
+        document.querySelectorAll(".list-checkbox").forEach((checkbox) => {
+          const cardKey = checkbox.dataset.cardKey;
+          checkbox.checked = selectedCards.has(cardKey);
+
+          const row = checkbox.closest("tr");
+          if (row) {
+            if (selectedCards.has(cardKey)) {
+              row.style.background = "rgba(125, 211, 252, 0.05)";
+            } else {
+              row.style.background = "";
+            }
+          }
+        });
+      }
+
+      async function getSelectedCardsData() {
+        if (selectedCards.size === 0) {
+          alert("Please select at least one card");
+          return;
+        }
+
+        const getDataBtn = document.getElementById("getDataBtn");
+        getDataBtn.disabled = true;
+        getDataBtn.textContent = "⏳ Processing...";
+
+        try {
+          const listingData = [];
+          const cancellationData = [];
+
+          // Currency-specific multipliers (INCLUDE 0.5% base undercut)
+          const CURRENCY_MULTIPLIERS = {
+            ETH: 0.935, // 6.5% undercut
+            GODS: 0.96, // 5.0% undercut
+            IMX: 0.915, // 8.5% undercut
+            USDC: 0.99, // 1.0% undercut
+          };
+
+          // Currency address to symbol mapping
+          const CURRENCY_MAP = {
+            "0x52a6c53869ce09a731cd772f245b97a4401d3348": "ETH",
+            "0xe0e0981d19ef2e0a57cc48ca60d9454ed2d53feb": "GODS",
+            "0xf57e7e7c23978c3caec3c3548e3d615c346e79ff": "IMX",
+            "0x6de8acc0d406837030ce4dd28e7c08c5a96a30d2": "USDC",
+          };
+
+          // Decimals for each currency
+          const CURRENCY_DECIMALS = {
+            ETH: 18,
+            GODS: 18,
+            IMX: 18,
+            USDC: 6,
+          };
+
+          selectedCards.forEach((card, cardKey) => {
+            const tokenIds = Array.isArray(card.ids) ? card.ids : [card.ids];
+            const userListedTokenIds = card.user_listed_token_ids || [];
+            const orderIdentifier = card.order_identifier || {};
+
+            // Get listings
+            const listings = card.listings || [];
+            if (listings.length === 0) {
+              console.warn(`No listings found for ${card.metadata?.name}`);
+              return;
+            }
+
+            // Find lowest listing (excluding user's own)
+            const marketListings = listings.filter(
+              (l) => !userListedTokenIds.includes(l.token_id)
+            );
+
+            if (marketListings.length === 0) {
+              console.warn(`No market listings for ${card.metadata?.name}`);
+              return;
+            }
+
+            // Get the lowest listing
+            const lowestListing = marketListings[0];
+
+            // Get currency info
+            const currencyAddress =
+              lowestListing.currency_address ||
+              "0x52a6c53869ce09a731cd772f245b97a4401d3348";
+            const currencySymbol =
+              lowestListing.currency_symbol ||
+              CURRENCY_MAP[currencyAddress.toLowerCase()] ||
+              "ETH";
+            const currencyQuantity = lowestListing.currency_quantity;
+            const floorPriceUSD = lowestListing.usd_price;
+
+            if (!currencyQuantity) {
+              console.warn(`No currency_quantity for ${card.metadata?.name}`);
+              return;
+            }
+
+            // Get multiplier for this currency
+            const multiplier = CURRENCY_MULTIPLIERS[currencySymbol] || 0.935;
+            const decimals = CURRENCY_DECIMALS[currencySymbol] || 18;
+
+            // Calculate listing quantity: floor_quantity * multiplier
+            const floorQuantity = BigInt(currencyQuantity);
+            const multiplierScaled = Math.floor(multiplier * 1000000);
+            const targetQuantity =
+              (floorQuantity * BigInt(multiplierScaled)) / BigInt(1000000);
+
+            // Round to SDK precision (only for 18-decimal currencies)
+            let finalQuantity = targetQuantity;
+            if (decimals === 18) {
+              const SDK_PRECISION = BigInt(1e12);
+              finalQuantity = (targetQuantity / SDK_PRECISION) * SDK_PRECISION;
+            }
+
+            const listingQuantityString = finalQuantity.toString();
+
+            // Calculate human-readable amounts for display
+            const floorAmount = Number(floorQuantity) / Math.pow(10, decimals);
+            const listingAmount =
+              Number(finalQuantity) / Math.pow(10, decimals);
+            const undercutPercent =
+              ((floorAmount - listingAmount) / floorAmount) * 100;
+
+            // Estimate USD (rough - for display only)
+            const listingPriceUSD = floorPriceUSD
+              ? floorPriceUSD * multiplier
+              : 0;
+
+            console.log(
+              `💰 ${card.metadata?.name}:`,
+              `\n  Currency: ${currencySymbol}`,
+              `\n  Floor: ${floorAmount.toFixed(
+                decimals === 6 ? 2 : 6
+              )} ${currencySymbol} ($${floorPriceUSD?.toFixed(2) || "N/A"})`,
+              `\n  Listing: ${listingAmount.toFixed(
+                decimals === 6 ? 2 : 6
+              )} ${currencySymbol} ($${listingPriceUSD.toFixed(2)})`,
+              `\n  Floor Quantity: ${currencyQuantity}`,
+              `\n  List Quantity: ${listingQuantityString}`,
+              `\n  Undercut: ${undercutPercent.toFixed(2)}%`,
+              `\n  Multiplier: ${multiplier}`
+            );
+
+            // Process each token
+            tokenIds.forEach((tokenId) => {
+              const isListed = userListedTokenIds.includes(tokenId);
+              const orderHash = orderIdentifier[tokenId];
+
+              // Add to listing data if not listed
+              if (!isListed) {
+                listingData.push({
+                  token_id: tokenId,
+                  card_name: card.metadata?.name || "Unknown",
+                  quality: card.quality,
+                  proto: card.proto,
+                  lowest_market_price_usd: floorPriceUSD || 0,
+                  listing_price_usd: listingPriceUSD,
+                  listing_price_eth: listingAmount, // Actually the token amount (ETH/GODS/IMX/USDC)
+                  listing_price_wei: listingQuantityString,
+                  currency_address: currencyAddress,
+                  currency_symbol: currencySymbol,
+                  undercut_percent: undercutPercent,
+                });
+              }
+
+              // Add to cancellation data if listed
+              if (isListed && orderHash) {
+                cancellationData.push({
+                  token_id: tokenId,
+                  order_hash: orderHash,
+                  card_name: card.metadata?.name || "Unknown",
+                  quality: card.quality,
+                  proto: card.proto,
+                  current_market_floor: floorPriceUSD || 0,
+                  should_relist: true,
+                  relist_price_usd: listingPriceUSD,
+                  relist_price_eth: listingAmount,
+                  relist_price_wei: listingQuantityString,
+                  currency_address: currencyAddress,
+                  currency_symbol: currencySymbol,
+                  undercut_percent: undercutPercent,
+                });
+              }
+            });
+          });
+
+          // Display the data
+          displayMarketData(listingData, cancellationData);
+        } catch (error) {
+          console.error("Error preparing market data:", error);
+          alert("Failed to prepare market data: " + error.message);
+        } finally {
+          getDataBtn.disabled = false;
+          getDataBtn.textContent = "📊 Get Market Data";
+        }
+        console.log(
+          `💰 ${card.metadata?.name}:`,
+          `\n  Currency: ${currencySymbol}`,
+          `\n  Floor: ${floorAmount.toFixed(
+            decimals === 6 ? 2 : 6
+          )} ${currencySymbol}`,
+          `\n  Listing: ${listingAmount.toFixed(
+            decimals === 6 ? 2 : 6
+          )} ${currencySymbol}`,
+          `\n  Floor Quantity: ${currencyQuantity}`,
+          `\n  List Quantity: ${listingQuantityString}`,
+          `\n  Undercut: ${undercutPercent.toFixed(2)}%`,
+          `\n  Multiplier: ${multiplier}`
+        );
+      }
+
+      function displayMarketData(listingData, cancellationData) {
+        let html =
+          '<div style="max-height: 600px; overflow-y: auto; padding: 20px;">';
+
+        // Summary section
+        const totalListing = listingData.length;
+        const totalCancellation = cancellationData.length;
+        const totalValue = listingData.reduce(
+          (sum, item) => sum + item.listing_price_usd,
+          0
+        );
+
+        html += `<h3 style="margin-bottom: 20px; color: var(--accent);">📊 Market Data for ${
+          totalListing + totalCancellation
+        } Tokens</h3>`;
+
+        html += `
+          <div style="background: rgba(125, 211, 252, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; font-size: 14px;">
+              <div>
+                <div style="color: var(--muted); font-size: 12px;">📤 Ready to List</div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--success);">${totalListing}</div>
+              </div>
+              <div>
+                <div style="color: var(--muted); font-size: 12px;">✕ To Cancel</div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--warning);">${totalCancellation}</div>
+              </div>
+              <div>
+                <div style="color: var(--muted); font-size: 12px;">Total Value</div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--accent);">$${totalValue.toFixed(
+                  2
+                )}</div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // ===== LISTING DATA SECTION =====
+        if (totalListing > 0) {
+          html += `
+            <div style="background: rgba(34, 197, 94, 0.1); border: 2px solid var(--success); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+              <h3 style="color: var(--success); margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+                📤 LISTING DATA (${totalListing} tokens)
+              </h3>
+              
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+                <button class="btn-select primary" onclick="copyListingPairs()">
+                  📋 Copy Token/Price Pairs
+                </button>
+                <button class="btn-select" onclick="copyListingJSON()">
+                  { } Copy as JSON
+                </button>
+                <button class="btn-select" onclick="downloadListingCSV()">
+                  💾 Download CSV
+                </button>
+              </div>
+              
+              <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 12px; max-height: 300px; overflow-y: auto;">
+                <div style="display: grid; grid-template-columns: 120px 200px 140px; gap: 12px; padding: 8px; border-bottom: 2px solid var(--success); font-weight: 600; position: sticky; top: 0; background: rgba(0,0,0,0.8);">
+                  <div>TOKEN ID</div>
+                  <div>PRICE (WEI)</div>
+                  <div>AMOUNT / USD</div>
+                </div>
+                ${listingData
+                  .map(
+                    (item) => `
+                  <div style="display: grid; grid-template-columns: 120px 200px 140px; gap: 12px; padding: 8px; border-bottom: 1px solid var(--border); align-items: center;">
+                    <div>
+                      <code style="background: rgba(125, 211, 252, 0.1); padding: 2px 6px; border-radius: 4px; font-size: 11px;">${
+                        item.token_id
+                      }</code>
+                    </div>
+                    <div style="color: var(--success); font-weight: 600; word-break: break-all;">
+                      ${item.listing_price_wei}
+                    </div>
+                    <div style="font-size: 11px; color: var(--muted);">
+                      ${item.listing_price_eth.toFixed(
+                        item.currency_symbol === "USDC" ? 2 : 6
+                      )} ${item.currency_symbol}<br>
+                      $${item.listing_price_usd.toFixed(4)}
+                    </div>
+                  </div>
+                `
+                  )
+                  .join("")}
+              </div>
+              
+              <div style="margin-top: 12px; padding: 12px; background: rgba(34, 197, 94, 0.1); border-radius: 6px; font-size: 12px; color: var(--muted);">
+                💡 <strong>Usage:</strong> Copy Token/Price pairs and use them in your listing tool. Price is in Wei format (ready for marketplace API).
+              </div>
+            </div>
+          `;
+        }
+
+        // ===== CANCELLATION DATA SECTION =====
+        if (totalCancellation > 0) {
+          html += `
+            <div style="background: rgba(251, 191, 36, 0.1); border: 2px solid var(--warning); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+              <h3 style="color: var(--warning); margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+                ✕ CANCELLATION DATA (${totalCancellation} listings)
+              </h3>
+              
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+                <button class="btn-select danger" onclick="copyCancellationPairs()">
+                  📋 Copy Token/OrderHash Pairs
+                </button>
+                <button class="btn-select" onclick="copyOrderHashesOnly()">
+                  🔑 Copy Order Hashes Only
+                </button>
+                <button class="btn-select" onclick="copyCancellationJSON()">
+                  { } Copy as JSON
+                </button>
+                <button class="btn-select" onclick="downloadCancellationCSV()">
+                  💾 Download CSV
+                </button>
+              </div>
+              
+              <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 12px; max-height: 300px; overflow-y: auto;">
+                <div style="display: grid; grid-template-columns: 100px 400px 120px; gap: 12px; padding: 8px; border-bottom: 2px solid var(--warning); font-weight: 600; position: sticky; top: 0; background: rgba(0,0,0,0.8);">
+                  <div>TOKEN ID</div>
+                  <div>ORDER HASH</div>
+                  <div>FLOOR PRICE</div>
+                </div>
+                ${cancellationData
+                  .map(
+                    (item) => `
+                  <div style="display: grid; grid-template-columns: 100px 400px 120px; gap: 12px; padding: 8px; border-bottom: 1px solid var(--border); align-items: center;">
+                    <div>
+                      <code style="background: rgba(251, 191, 36, 0.1); padding: 2px 6px; border-radius: 4px; font-size: 11px;">${
+                        item.token_id
+                      }</code>
+                    </div>
+                    <div style="color: var(--warning); font-weight: 600; word-break: break-all; font-size: 10px;">
+                      ${item.order_hash}
+                    </div>
+                    <div style="font-size: 11px; color: var(--muted);">
+                      $${item.current_market_floor.toFixed(4)}
+                    </div>
+                  </div>
+                `
+                  )
+                  .join("")}
+              </div>
+              
+              <div style="margin-top: 12px; padding: 12px; background: rgba(251, 191, 36, 0.1); border-radius: 6px; font-size: 12px; color: var(--muted);">
+                💡 <strong>Usage:</strong> Copy Order Hashes and use them to cancel/unlist your cards via marketplace API.
+              </div>
+            </div>
+          `;
+        }
+
+        // Footer info
+        html += `
+          <div style="margin-top: 20px; padding: 16px; background: rgba(96, 165, 250, 0.1); border: 1px solid var(--accent); border-radius: 8px; font-size: 13px;">
+            <div style="font-weight: 600; margin-bottom: 8px;">ℹ️ Data Format Info</div>
+            <div style="color: var(--muted); line-height: 1.6;">
+              • <strong>Price (Wei):</strong> Ready for marketplace listing (ETH × 10¹⁸)<br>
+              • <strong>Order Hash:</strong> Required to cancel/unlist a card<br>
+              • <strong>Pricing Strategy:</strong> Floor price - 0.5%<br>
+              • <strong>Currency:</strong> ETH (0x52a6c53869ce09a731cd772f245b97a4401d3348)
+            </div>
+          </div>
+        `;
+
+        html += "</div>";
+
+        document.getElementById("marketDataBody").innerHTML = html;
+        document.getElementById("marketDataModal").classList.add("active");
+
+        // Store both datasets
+        window.currentListingData = listingData;
+        window.currentCancellationData = cancellationData;
+
+        console.log("📤 Listing Data:", listingData);
+        console.log("✕ Cancellation Data:", cancellationData);
+      }
+
+      // ==== LISTING COPY FUNCTIONS ====
+      function copyListingPairs() {
+        if (
+          !window.currentListingData ||
+          window.currentListingData.length === 0
+        ) {
+          alert("No listing data available");
+          return;
+        }
+
+        let text = "";
+        window.currentListingData.forEach((item) => {
+          text += `${item.token_id}\t${item.listing_price_wei}\n`;
+        });
+
+        navigator.clipboard.writeText(text).then(() => {
+          alert(
+            `✅ Copied ${window.currentListingData.length} token/price pairs!\n\nFormat: TOKEN_ID [TAB] PRICE_WEI`
+          );
+        });
+      }
+
+      function copyListingJSON() {
+        if (!window.currentListingData) return;
+
+        const json = JSON.stringify(window.currentListingData, null, 2);
+
+        navigator.clipboard.writeText(json).then(() => {
+          alert("✅ Copied listing data as JSON!");
+        });
+      }
+
+      function downloadListingCSV() {
+        if (!window.currentListingData) return;
+
+        let csv =
+          "Token ID,Card Name,Quality,Lowest Price USD,Listing Price USD,Listing Price ETH,Listing Price Wei,Currency Address\n";
+
+        window.currentListingData.forEach((item) => {
+          csv += `${item.token_id},"${item.card_name}",${
+            item.quality
+          },${item.lowest_market_price_usd.toFixed(
+            4
+          )},${item.listing_price_usd.toFixed(
+            4
+          )},${item.listing_price_eth.toFixed(8)},${item.currency_symbol},${
+            item.listing_price_wei
+          },${item.currency_address}\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `listing-data-${new Date().getTime()}.csv`;
+        a.click();
+      }
+
+      // ==== CANCELLATION COPY FUNCTIONS ====
+      function copyCancellationPairs() {
+        if (
+          !window.currentCancellationData ||
+          window.currentCancellationData.length === 0
+        ) {
+          alert("No cancellation data available");
+          return;
+        }
+
+        let text = "";
+        window.currentCancellationData.forEach((item) => {
+          text += `${item.token_id}\t${item.order_hash}\n`;
+        });
+
+        navigator.clipboard.writeText(text).then(() => {
+          alert(
+            `✅ Copied ${window.currentCancellationData.length} token/order_hash pairs!\n\nFormat: TOKEN_ID [TAB] ORDER_HASH`
+          );
+        });
+      }
+
+      function copyOrderHashesOnly() {
+        if (!window.currentCancellationData) return;
+
+        const hashes = window.currentCancellationData
+          .map((item) => item.order_hash)
+          .join("\n");
+
+        navigator.clipboard.writeText(hashes).then(() => {
+          alert(
+            `✅ Copied ${window.currentCancellationData.length} order hashes!`
+          );
+        });
+      }
+
+      function copyCancellationJSON() {
+        if (!window.currentCancellationData) return;
+
+        const json = JSON.stringify(window.currentCancellationData, null, 2);
+
+        navigator.clipboard.writeText(json).then(() => {
+          alert("✅ Copied cancellation data as JSON!");
+        });
+      }
+
+      function downloadCancellationCSV() {
+        if (!window.currentCancellationData) return;
+
+        let csv =
+          "Token ID,Order Hash,Card Name,Quality,Current Floor USD,Relist Price USD,Relist Price Wei\n";
+
+        window.currentCancellationData.forEach((item) => {
+          csv += `${item.token_id},${item.order_hash},"${item.card_name}",${
+            item.quality
+          },${item.current_market_floor.toFixed(
+            4
+          )},${item.relist_price_usd.toFixed(4)},${item.relist_price_wei}\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `cancellation-data-${new Date().getTime()}.csv`;
+        a.click();
+      }
+
+      async function listSelectedCards() {
+       
+
+        // Check if listing data exists
+        if (
+          !window.currentListingData ||
+          window.currentListingData.length === 0
+        ) {
+          alert(
+            'Please click "📊 Get Market Data" first to generate listing data'
+          );
+          return;
+        }
+
+        try {
+          // Check if orderbook is initialized
+          if (
+            !window.OrderbookIntegration ||
+            !window.OrderbookIntegration.isConnected()
+          ) {
+            // Initialize orderbook
+            showProgressModal("Connecting wallet...");
+            await window.OrderbookIntegration.initializeOrderbook();
+            hideProgressModal();
+          }
+
+          const listingData = window.currentListingData;
+
+          const confirmMsg =
+            `Ready to list ${listingData.length} card(s)!\n\n` +
+            `This will be processed in batches of ${window.OrderbookIntegration.BATCH_SIZE}.\n` +
+            `You'll need to approve transactions in MetaMask.\n\n` +
+            `Continue?`;
+
+          if (!confirm(confirmMsg)) return;
+
+          // Show progress modal
+          showProgressModal("Starting bulk listing...");
+
+          // Start bulk listing with progress callback
+          const results = await window.OrderbookIntegration.bulkListCards(
+            listingData,
+            (progress) => {
+              updateProgressModal(progress);
+            }
+          );
+
+          // Hide progress modal
+          hideProgressModal();
+
+          // Show results
+          const resultMsg =
+            `Bulk Listing Complete!\n\n` +
+            `✅ Successfully listed: ${results.successful}\n` +
+            `❌ Failed: ${results.failed}\n` +
+            (results.cancelled > 0
+              ? `🛑 Cancelled: ${results.cancelled}\n`
+              : "") +
+            `Total: ${results.total}`;
+
+          alert(resultMsg);
+
+          console.log("Listing Results:", results);
+
+          // If any succeeded, refresh the collection
+          if (results.successful > 0) {
+            const shouldRefresh = confirm(
+              "Listings created! Refresh collection data?"
+            );
+            if (shouldRefresh) {
+              loadCollection();
+            }
+          }
+        } catch (error) {
+          console.error("Listing error:", error);
+          hideProgressModal();
+          alert(`Error: ${error.message}`);
+        }
+      }
+      async function cancelSelectedListings() {
+        
+
+        // Check if cancellation data exists
+        if (
+          !window.currentCancellationData ||
+          window.currentCancellationData.length === 0
+        ) {
+          alert(
+            'No listings to cancel.\n\nClick "📊 Get Market Data" first if you have listed cards.'
+          );
+          return;
+        }
+
+        try {
+          // Check if orderbook is initialized
+          if (
+            !window.OrderbookIntegration ||
+            !window.OrderbookIntegration.isConnected()
+          ) {
+            // Initialize orderbook
+            showProgressModal("Connecting wallet...");
+            await window.OrderbookIntegration.initializeOrderbook();
+            hideProgressModal();
+          }
+
+          const cancellationData = window.currentCancellationData;
+
+          const confirmMsg =
+            `Ready to cancel ${cancellationData.length} listing(s)!\n\n` +
+            `This will be processed in batches of ${window.OrderbookIntegration.BATCH_SIZE}.\n\n` +
+            `Continue?`;
+
+          if (!confirm(confirmMsg)) return;
+
+          // Show progress modal
+          showProgressModal("Starting bulk cancellation...");
+
+          // Start bulk cancellation with progress callback
+          const results = await window.OrderbookIntegration.bulkCancelListings(
+            cancellationData,
+            (progress) => {
+              updateProgressModal(progress);
+            }
+          );
+
+          // Hide progress modal
+          hideProgressModal();
+
+          // Show results
+          const resultMsg =
+            `Bulk Cancellation Complete!\n\n` +
+            `✅ Successfully cancelled: ${results.successful}\n` +
+            `❌ Failed: ${results.failed}\n` +
+            `Total: ${results.total}`;
+
+          alert(resultMsg);
+
+          console.log("Cancellation Results:", results);
+
+          // If any succeeded, refresh the collection
+          if (results.successful > 0) {
+            const shouldRefresh = confirm(
+              "Listings cancelled! Refresh collection data?"
+            );
+            if (shouldRefresh) {
+              loadCollection();
+            }
+          }
+        } catch (error) {
+          console.error("Cancellation error:", error);
+          hideProgressModal();
+          alert(`Error: ${error.message}`);
+        }
+      }
+      async function relistUndercutCards() {
+        try {
+          console.log("🔍 Finding undercut + listed cards...");
+
+          // Automatically find all undercut + listed cards
+          const undercutListedCards = allCards.filter(card => {
+            if (card.listing_status !== 'undercut') return false;
+            const listedTokenIds = card._listed_token_ids || [];
+            return listedTokenIds.length > 0;
+          });
+
+          if (undercutListedCards.length === 0) {
+            alert(
+              'No undercut listings found!\n\n' +
+              'This means:\n' +
+              '• All your listings are at floor price, OR\n' +
+              '• You have no active listings\n\n' +
+              'Your listings are competitive! ✅'
+            );
+            return;
+          }
+
+          console.log(`📊 Found ${undercutListedCards.length} undercut cards`);
+
+          // Show loading indicator
+          const originalText = document.getElementById('relistUndercutBtn').textContent;
+          document.getElementById('relistUndercutBtn').textContent = '⏳ Loading data...';
+          document.getElementById('relistUndercutBtn').disabled = true;
+
+          // Generate market data for these cards
+          const listingData = [];
+          const cancellationData = [];
+
+          // Currency configuration (same as getSelectedCardsData)
+          const CURRENCY_MULTIPLIERS = {
+            ETH: 0.935,
+            GODS: 0.96,
+            IMX: 0.915,
+            USDC: 0.99,
+          };
+
+          const CURRENCY_MAP = {
+            "0x52a6c53869ce09a731cd772f245b97a4401d3348": "ETH",
+            "0xe0e0981d19ef2e0a57cc48ca60d9454ed2d53feb": "GODS",
+            "0xf57e7e7c23978c3caec3c3548e3d615c346e79ff": "IMX",
+            "0x6de8acc0d406837030ce4dd28e7c08c5a96a30d2": "USDC",
+          };
+
+          const CURRENCY_DECIMALS = {
+            ETH: 18,
+            GODS: 18,
+            IMX: 18,
+            USDC: 6,
+          };
+
+          // Process each undercut card
+          undercutListedCards.forEach(card => {
+            const userListedTokenIds = card._listed_token_ids || [];
+            const orderIdentifier = card.order_identifier || {};
+            const listings = card.listings || [];
+
+            if (listings.length === 0) return;
+
+            // Find lowest market listing (excluding user's own)
+            const marketListings = listings.filter(
+              (l) => !userListedTokenIds.includes(l.token_id)
+            );
+
+            if (marketListings.length === 0) return;
+
+            const lowestListing = marketListings[0];
+            const currencyAddress = lowestListing.currency_address || "0x52a6c53869ce09a731cd772f245b97a4401d3348";
+            const currencySymbol = lowestListing.currency_symbol || CURRENCY_MAP[currencyAddress.toLowerCase()] || "ETH";
+            const currencyQuantity = lowestListing.currency_quantity;
+            const floorPriceUSD = lowestListing.usd_price;
+
+            if (!currencyQuantity) return;
+
+            // Calculate listing price
+            const multiplier = CURRENCY_MULTIPLIERS[currencySymbol] || 0.935;
+            const decimals = CURRENCY_DECIMALS[currencySymbol] || 18;
+
+            const floorQuantity = BigInt(currencyQuantity);
+            const multiplierScaled = Math.floor(multiplier * 1000000);
+            const targetQuantity = (floorQuantity * BigInt(multiplierScaled)) / BigInt(1000000);
+
+            let finalQuantity = targetQuantity;
+            if (decimals === 18) {
+              const SDK_PRECISION = BigInt(1e12);
+              finalQuantity = (targetQuantity / SDK_PRECISION) * SDK_PRECISION;
+            }
+
+            const listingQuantityString = finalQuantity.toString();
+            const listingAmount = Number(finalQuantity) / Math.pow(10, decimals);
+            const listingPriceUSD = floorPriceUSD ? floorPriceUSD * multiplier : 0;
+
+            // Process each listed token (for cancellation and relisting)
+            userListedTokenIds.forEach((tokenId) => {
+              const orderHash = orderIdentifier[tokenId];
+
+              if (orderHash) {
+                // Add to cancellation data
+                cancellationData.push({
+                  token_id: tokenId,
+                  order_hash: orderHash,
+                  card_name: card.metadata?.name || "Unknown",
+                  quality: card.quality,
+                  proto: card.proto,
+                });
+
+                // Add to listing data (for relisting after cancel)
+                listingData.push({
+                  token_id: tokenId,
+                  card_name: card.metadata?.name || "Unknown",
+                  quality: card.quality,
+                  proto: card.proto,
+                  lowest_market_price_usd: floorPriceUSD || 0,
+                  listing_price_usd: listingPriceUSD,
+                  listing_price_eth: listingAmount,
+                  listing_price_wei: listingQuantityString,
+                  currency_address: currencyAddress,
+                  currency_symbol: currencySymbol,
+                });
+              }
+            });
+          });
+
+          // Reset button
+          document.getElementById('relistUndercutBtn').textContent = originalText;
+          document.getElementById('relistUndercutBtn').disabled = false;
+
+          if (cancellationData.length === 0 || listingData.length === 0) {
+            alert('No valid undercut listings found with order data.');
+            return;
+          }
+
+          console.log(`✅ Prepared ${cancellationData.length} orders for relisting`);
+
+          // Show preview modal
+          showRelistPreviewModal(undercutListedCards, cancellationData, listingData);
+
+        } catch (error) {
+          console.error('❌ Relist error:', error);
+          document.getElementById('relistUndercutBtn').textContent = '🔄 Relist Undercut';
+          document.getElementById('relistUndercutBtn').disabled = false;
+          alert(`Error: ${error.message}`);
+        }
+      }
+      function showRelistPreviewModal(cards, cancellationData, listingData) {
+        const existingModal = document.getElementById('relistPreviewModal');
+        if (existingModal) existingModal.remove();
+
+        const totalOldValue = cards.reduce((sum, card) => {
+          const listedTokens = card._listed_token_ids || [];
+          const pricePerCard = card.user_listing_price || 0;
+          return sum + (pricePerCard * listedTokens.length);
+        }, 0);
+
+        const totalNewValue = listingData.reduce((sum, item) => {
+          return sum + (parseFloat(item.listing_price_usd) || 0);
+        }, 0);
+
+        const valueDifference = totalNewValue - totalOldValue;
+
+        let tableRows = '';
+        cards.forEach(card => {
+          const meta = card.metadata || {};
+          const listedTokenIds = card._listed_token_ids || [];
+          const oldPrice = card.user_listing_price || 0;
+          const newPrice = card.lowest_price || 0;
+          const priceDiff = newPrice - oldPrice;
+          
+          const orderIds = cancellationData
+            .filter(item => listedTokenIds.includes(Number(item.token_id)))
+            .map(item => item.order_hash || item.order_id || item.listing_id)
+            .filter(Boolean);
+
+          listedTokenIds.forEach((tokenId, index) => {
+            const orderId = orderIds[index] || 'N/A';
+            tableRows += `
+              <tr>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border);">
+                  <div style="color: var(--text); font-weight: 500;">${meta.name || 'Unknown'}</div>
+                  <div style="color: var(--muted); font-size: 12px;">${meta.God || ''} • ${meta.Rarity || ''} • ${meta.Quality || ''}</div>
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border); color: var(--muted); font-family: monospace; font-size: 13px;">
+                  ${tokenId}
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border); color: var(--muted); font-family: monospace; font-size: 11px; max-width: 150px; overflow: hidden; text-overflow: ellipsis;" title="${orderId}">
+                  ${orderId.substring(0, 20)}...
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border); color: var(--danger); font-weight: 600;">
+                  $${oldPrice.toFixed(2)}
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border); color: var(--success); font-weight: 600;">
+                  $${newPrice.toFixed(2)}
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border); color: ${priceDiff >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight: 600;">
+                  ${priceDiff >= 0 ? '+' : ''}$${priceDiff.toFixed(2)}
+                </td>
+              </tr>
+            `;
+          });
+        });
+
+        const modal = document.createElement('div');
+        modal.id = 'relistPreviewModal';
+        modal.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.85);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10001;
+          animation: fadeIn 0.2s;
+        `;
+
+        modal.innerHTML = `
+          <div style="background: var(--bg); border: 2px solid var(--warning); border-radius: 16px; max-width: 1200px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);">
+            <div style="padding: 24px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <h2 style="color: var(--text); font-size: 24px; font-weight: 700; margin: 0 0 4px 0; display: flex; align-items: center; gap: 12px;">📊 Relist Undercut Preview</h2>
+                <p style="color: var(--muted); font-size: 14px; margin: 0;">Review ${cancellationData.length} listing(s) before proceeding</p>
+              </div>
+              <button onclick="closeRelistPreviewModal()" style="background: rgba(255, 255, 255, 0.05); color: var(--text); border: 1px solid var(--border); width: 36px; height: 36px; border-radius: 8px; font-size: 18px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">✕</button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 20px 32px; background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid var(--border);">
+              <div style="background: rgba(125, 211, 252, 0.1); border: 1px solid rgba(125, 211, 252, 0.3); border-radius: 8px; padding: 16px; text-align: center;">
+                <div style="color: var(--muted); font-size: 12px; margin-bottom: 4px;">📋 To Cancel</div>
+                <div style="color: var(--accent); font-size: 28px; font-weight: 700;">${cancellationData.length}</div>
+                <div style="color: var(--muted); font-size: 11px; margin-top: 2px;">${cards.length} unique cards</div>
+              </div>
+              <div style="background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); border-radius: 8px; padding: 16px; text-align: center;">
+                <div style="color: var(--muted); font-size: 12px; margin-bottom: 4px;">💰 Old Value</div>
+                <div style="color: var(--danger); font-size: 28px; font-weight: 700;">$${totalOldValue.toFixed(2)}</div>
+                <div style="color: var(--muted); font-size: 11px; margin-top: 2px;">Current listings</div>
+              </div>
+              <div style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); border-radius: 8px; padding: 16px; text-align: center;">
+                <div style="color: var(--muted); font-size: 12px; margin-bottom: 4px;">💵 New Value</div>
+                <div style="color: var(--success); font-size: 28px; font-weight: 700;">$${totalNewValue.toFixed(2)}</div>
+                <div style="color: ${valueDifference >= 0 ? 'var(--success)' : 'var(--danger)'}; font-size: 11px; margin-top: 2px;">${valueDifference >= 0 ? '↑' : '↓'} $${Math.abs(valueDifference).toFixed(2)}</div>
+              </div>
+            </div>
+            <div style="flex: 1; overflow-y: auto; padding: 20px 32px;">
+              <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="background: rgba(255, 255, 255, 0.05);">
+                      <th style="padding: 12px; text-align: left; color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid var(--border);">Card Name</th>
+                      <th style="padding: 12px; text-align: left; color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid var(--border);">Token ID</th>
+                      <th style="padding: 12px; text-align: left; color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid var(--border);">Order ID</th>
+                      <th style="padding: 12px; text-align: left; color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid var(--border);">Old Price</th>
+                      <th style="padding: 12px; text-align: left; color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid var(--border);">New Price</th>
+                      <th style="padding: 12px; text-align: left; color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid var(--border);">Change</th>
+                    </tr>
+                  </thead>
+                  <tbody>${tableRows}</tbody>
+                </table>
+              </div>
+            </div>
+            <div style="padding: 20px 32px; background: rgba(255, 255, 255, 0.02); border-top: 1px solid var(--border); display: flex; gap: 12px;">
+              <button onclick="closeRelistPreviewModal()" style="flex: 1; padding: 14px 24px; background: rgba(255, 255, 255, 0.05); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">✕ Cancel</button>
+              <button onclick="proceedWithRelist()" style="flex: 2; padding: 14px 24px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #000; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(251, 191, 36, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(251, 191, 36, 0.4)'">🔄 Proceed with Relist (${cancellationData.length} listings)</button>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(modal);
+        window._relistData = { cancellationData, listingData };
+      }
+
+      function closeRelistPreviewModal() {
+        const modal = document.getElementById('relistPreviewModal');
+        if (modal) {
+          modal.style.animation = 'fadeOut 0.2s';
+          setTimeout(() => modal.remove(), 200);
+        }
+        window._relistData = null;
+      }
+
+      async function proceedWithRelist() {
+        if (!window._relistData) {
+          alert('Error: Relist data not found');
+          return;
+        }
+
+        const { cancellationData, listingData } = window._relistData;
+        closeRelistPreviewModal();
+
+        try {
+          if (!window.OrderbookIntegration || !window.OrderbookIntegration.isConnected()) {
+            showProgressModal("Connecting wallet...");
+            await window.OrderbookIntegration.initializeOrderbook();
+            hideProgressModal();
+          }
+
+          showProgressModal("Step 1/2: Cancelling undercut listings...");
+          console.log("🎯 Step 1: Cancelling...");
+          
+          const cancelResults = await window.OrderbookIntegration.bulkCancelListings(
+            cancellationData,
+            (progress) => {
+              updateProgressModal({ 
+                ...progress, 
+                message: `Step 1/2: Cancelling...\n${progress.message || ''}` 
+              });
+            }
+          );
+
+          console.log("✅ Cancel results:", cancelResults);
+
+          if (cancelResults.successful === 0 && cancelResults.pending === 0) {
+            hideProgressModal();
+            alert(
+              `❌ Cancellation Failed\n\n` +
+              `✅ Success: ${cancelResults.successful}\n` +
+              `⏳ Pending: ${cancelResults.pending}\n` +
+              `❌ Failed: ${cancelResults.failed}\n\n` +
+              `Relisting aborted.`
+            );
+            return;
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          console.log("📤 Step 2: Relisting...");
+
+          const listResults = await window.OrderbookIntegration.bulkListCards(
+            listingData,
+            (progress) => {
+              updateProgressModal({ 
+                ...progress, 
+                message: `Step 2/2: Relisting...\n${progress.message || ''}` 
+              });
+            }
+          );
+
+          console.log("✅ List results:", listResults);
+          hideProgressModal();
+
+          const netSuccess = Math.min(
+            cancelResults.successful + cancelResults.pending, 
+            listResults.successful
+          );
+
+          const resultMsg = 
+            `🎉 RELIST COMPLETE!\n\n` +
+            `━━━ CANCELLATION ━━━\n` +
+            `✅ Cancelled: ${cancelResults.successful}\n` +
+            `⏳ Pending: ${cancelResults.pending}\n` +
+            `❌ Failed: ${cancelResults.failed}\n\n` +
+            `━━━ RELISTING ━━━\n` +
+            `✅ Listed: ${listResults.successful}\n` +
+            `❌ Failed: ${listResults.failed}\n` +
+            (listResults.cancelled > 0 ? `🛑 Cancelled: ${listResults.cancelled}\n` : '') +
+            `\n━━━━━━━━━━━━━━━━━\n` +
+            `📊 Net Success: ${netSuccess} cards relisted`;
+
+          alert(resultMsg);
+
+          if (netSuccess > 0) {
+            if (confirm(`${netSuccess} cards relisted!\n\nRefresh collection?`)) {
+              loadCollection();
+            }
+          }
+
+        } catch (error) {
+          console.error('❌ Relist error:', error);
+          hideProgressModal();
+          alert(`Error: ${error.message}`);
+        }
+      }
+      
+      function showProgressModal(message) {
+        let modal = document.getElementById("progressModal");
+
+        if (!modal) {
+          // Create modal if it doesn't exist
+          modal = document.createElement("div");
+          modal.id = "progressModal";
+          modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+          const content = document.createElement("div");
+          content.style.cssText = `
+      background: var(--panel);
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    `;
+
+          content.innerHTML = `
+      <h3 style="color: var(--accent); margin-bottom: 16px; text-align: center;">
+        Processing...
+      </h3>
+      <div id="progressMessage" style="color: var(--text); margin-bottom: 16px; text-align: center; font-size: 14px;">
+        ${message}
+      </div>
+      <div style="background: rgba(255,255,255,0.1); height: 24px; border-radius: 12px; overflow: hidden; margin-bottom: 16px;">
+        <div id="progressFill" style="background: var(--accent); height: 100%; width: 0%; transition: width 0.3s;"></div>
+      </div>
+      <div id="progressStats" style="color: var(--muted); font-size: 13px; text-align: center; margin-bottom: 16px;">
+        0 / 0
+      </div>
+      <button 
+        id="cancelListingBtn"
+        onclick="window.cancelListing && window.cancelListing()"
+        style="
+          display: none;
+          width: 100%;
+          padding: 12px 24px;
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+        "
+        onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 6px 12px rgba(239, 68, 68, 0.4)'"
+        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 6px rgba(239, 68, 68, 0.3)'"
+      >
+        🛑 Cancel Listing
+      </button>
+    `;
+
+          modal.appendChild(content);
+          document.body.appendChild(modal);
+        }
+
+        modal.style.display = "flex";
+        document.getElementById("progressMessage").textContent = message;
+
+        // Hide cancel button initially
+        const cancelBtn = document.getElementById("cancelListingBtn");
+        if (cancelBtn) {
+          cancelBtn.style.display = "none";
+        }
+      }
+      function updateProgressModal(progress) {
+        const messageEl = document.getElementById("progressMessage");
+        const fillEl = document.getElementById("progressFill");
+        const statsEl = document.getElementById("progressStats");
+        const cancelBtn = document.getElementById("cancelListingBtn");
+
+        if (messageEl && progress.message) {
+          messageEl.textContent = progress.message;
+        }
+
+        if (fillEl && progress.total > 0) {
+          const percentage = (progress.processed / progress.total) * 100;
+          fillEl.style.width = `${percentage}%`;
+        }
+
+        if (statsEl) {
+          if (progress.status === "complete") {
+            statsEl.textContent = `✅ ${progress.successful} successful, ❌ ${progress.failed} failed`;
+            if (progress.cancelled > 0) {
+              statsEl.textContent += `, 🛑 ${progress.cancelled} cancelled`;
+            }
+            statsEl.style.color = "var(--success)";
+          } else if (progress.status === "cancelled") {
+            statsEl.textContent = `🛑 Cancelled: ${progress.successful} listed, ${progress.cancelled} not listed`;
+            statsEl.style.color = "var(--warning)";
+          } else {
+            statsEl.textContent = `${progress.processed} / ${progress.total}`;
+            if (progress.currentBatch && progress.totalBatches) {
+              statsEl.textContent += ` - Batch ${progress.currentBatch} / ${progress.totalBatches}`;
+            }
+          }
+        }
+
+        // Show/hide cancel button based on progress.showCancel
+        if (cancelBtn) {
+          if (progress.showCancel) {
+            cancelBtn.style.display = "block";
+          } else {
+            cancelBtn.style.display = "none";
+          }
+        }
+      }
+
+      function hideProgressModal() {
+        const modal = document.getElementById("progressModal");
+        if (modal) {
+          modal.style.display = "none";
+        }
+      }
+
+      function closeMarketDataModal() {
+        document.getElementById("marketDataModal").classList.remove("active");
+      }
+
+      // Save current collection
+      function saveCurrentCollection() {
+        if (!allCards || allCards.length === 0) {
+          alert("No collection loaded to save");
+          return;
+        }
+
+        currentCollectionData = allCards;
+        currentSummaryData = {
+          total_cards: parseInt(
+            document.getElementById("totalCards").textContent.replace(/,/g, "")
+          ),
+          unique_cards: parseInt(
+            document.getElementById("uniqueCards").textContent.replace(/,/g, "")
+          ),
+          total_listing_value: parseFloat(
+            document
+              .getElementById("listingValue")
+              .textContent.replace(/[$,]/g, "")
+          ),
+          total_bid_value: parseFloat(
+            document.getElementById("bidValue").textContent.replace(/[$,]/g, "")
+          ),
+          total_last_sold_value: parseFloat(
+            document
+              .getElementById("lastSoldValue")
+              .textContent.replace(/[$,]/g, "")
+          ),
+          total_real_value: parseFloat(
+            document
+              .getElementById("realValue")
+              .textContent.replace(/[$,]/g, "")
+          ),
+        };
+        currentWalletAddress = document
+          .getElementById("walletInput")
+          .value.trim();
+
+        // Pre-fill with wallet address
+        document.getElementById(
+          "collectionNameInput"
+        ).value = `Collection ${currentWalletAddress.substring(0, 8)}...`;
+        document.getElementById("saveCollectionModal").classList.add("active");
+      }
+
+      async function confirmSaveCollection() {
+        const collectionName = document
+          .getElementById("collectionNameInput")
+          .value.trim();
+        if (!collectionName) {
+          alert("Please enter a collection name");
+          return;
+        }
+
+        // Show loading state
+        const saveBtn = document.getElementById("saveCollectionBtn");
+        const saveText = document.getElementById("saveButtonText");
+        const saveSpinner = document.getElementById("saveButtonSpinner");
+
+        saveBtn.disabled = true;
+        saveText.style.display = "none";
+        saveSpinner.style.display = "inline";
+
+        try {
+          const response = await fetch(`${API_BASE}/collections/save`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              wallet_address: currentWalletAddress,
+              collection_name: collectionName,
+              collection_data: currentCollectionData,
+              summary_data: currentSummaryData,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            alert("Collection saved successfully!");
+            closeSaveModal();
+          } else {
+            alert("Error: " + data.error);
+          }
+        } catch (error) {
+          alert("Failed to save collection");
+          console.error(error);
+        } finally {
+          // Reset button state
+          saveBtn.disabled = false;
+          saveText.style.display = "inline";
+          saveSpinner.style.display = "none";
+        }
+      }
+      function closeSaveModal() {
+        document
+          .getElementById("saveCollectionModal")
+          .classList.remove("active");
+      }
+
+      // Show saved collections
+      async function showSavedCollections() {
+        document
+          .getElementById("savedCollectionsModal")
+          .classList.add("active");
+        document.getElementById("collectionsLoading").style.display = "block";
+        document.getElementById("collectionsList").style.display = "none";
+
+        try {
+          const response = await fetch(`${API_BASE}/collections/list`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            renderSavedCollections(data.collections);
+          } else {
+            alert("Error loading collections");
+          }
+        } catch (error) {
+          alert("Failed to load collections");
+          console.error(error);
+        }
+      }
+
+      function renderSavedCollections(collections) {
+        document.getElementById("collectionsLoading").style.display = "none";
+        const listDiv = document.getElementById("collectionsList");
+        listDiv.style.display = "block";
+
+        if (collections.length === 0) {
+          listDiv.innerHTML = `
+            <div class="empty-collections">
+                <div class="empty-collections-icon">📁</div>
+                <div>No saved collections yet</div>
+                <div style="font-size: 13px; margin-top: 8px;">Load a collection and click "Save Collection" to save it</div>
+            </div>
+        `;
+          return;
+        }
+
+        listDiv.innerHTML = collections
+          .map(
+            (col) => `
+        <div class="collection-item" onclick="loadSavedCollection(${col.id})">
+            <div class="collection-header">
+                <div>
+                    <div class="collection-title">${col.collection_name}</div>
+                    <div class="collection-wallet">${col.wallet_address}</div>
+                </div>
+                <div class="collection-actions">
+                    <button class="btn" onclick="event.stopPropagation(); deleteSavedCollection(${
+                      col.id
+                    })" 
+                            style="padding: 6px 12px; font-size: 12px; background: transparent; border: 1px solid var(--border);">
+                        🗑️ Delete
+                    </button>
+                </div>
+            </div>
+            <div class="collection-stats">
+                <div class="collection-stat">
+                    <span class="collection-stat-label">Total Cards</span>
+                    <span class="collection-stat-value">${
+                      col.total_cards
+                    }</span>
+                </div>
+                <div class="collection-stat">
+                    <span class="collection-stat-label">Unique Cards</span>
+                    <span class="collection-stat-value">${
+                      col.unique_cards
+                    }</span>
+                </div>
+                <div class="collection-stat">
+                    <span class="collection-stat-label">Real Value</span>
+                    <span class="collection-stat-value">${formatCurrency(
+                      col.total_real_value
+                    )}</span>
+                </div>
+                <div class="collection-stat">
+                    <span class="collection-stat-label">Last Updated</span>
+                    <span class="collection-stat-value" style="font-size: 12px;">${new Date(
+                      col.updated_at
+                    ).toLocaleDateString()}</span>
+                </div>
+            </div>
+        </div>
+    `
+          )
+          .join("");
+      }
+
+      async function loadSavedCollection(collectionId) {
+        closeSavedCollectionsModal();
+        showLoading(true);
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/collections/${collectionId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Load the saved data
+            allCards = data.cards;
+            filteredCards = [...allCards]; // Initialize filtered cards
+
+            document.getElementById("walletInput").value = data.wallet;
+
+            // Update summary with proper data
+            updateSummary(data.summary);
+
+            // Populate filters
+            populateFilters();
+
+            // Apply filters and render
+            applyFilters();
+
+            // Show UI elements
+            document.getElementById("summarySection").style.display = "grid";
+            document.getElementById("viewControls").style.display = "flex";
+
+            // Initialize selection UI
+            updateSelectionUI();
+
+            console.log(
+              "Collection loaded successfully:",
+              data.cards.length,
+              "cards"
+            );
+          } else {
+            alert("Error loading collection: " + data.error);
+          }
+        } catch (error) {
+          console.error("Load error:", error);
+          alert("Failed to load collection");
+        } finally {
+          showLoading(false);
+        }
+      }
+      async function deleteSavedCollection(collectionId) {
+        if (!confirm("Are you sure you want to delete this collection?")) {
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/collections/${collectionId}`,
+            {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Refresh the list
+            showSavedCollections();
+          } else {
+            alert("Error deleting collection");
+          }
+        } catch (error) {
+          alert("Failed to delete collection");
+          console.error(error);
+        }
+      }
+
+      function closeSavedCollectionsModal() {
+        document
+          .getElementById("savedCollectionsModal")
+          .classList.remove("active");
+      }
+
+      // Close modals on overlay click
+      document
+        .getElementById("savedCollectionsModal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "savedCollectionsModal")
+            closeSavedCollectionsModal();
+        });
+
+      document
+        .getElementById("saveCollectionModal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "saveCollectionModal") closeSaveModal();
+        });
+
+      // Load collection
+      async function loadCollection() {
+        const wallet = document.getElementById("walletInput").value.trim();
+        if (!wallet) {
+          alert("Please enter a wallet address");
+          return;
+        }
+
+        showLoading(true);
+
+        try {
+          const response = await fetch(`${API_BASE}/collection/${wallet}`);
+          const data = await response.json();
+
+          if (!data.success) {
+            throw new Error(data.error || "Failed to load collection");
+          }
+
+          // Split cards by listing status - but only when filtering
+          allCards = data.cards.map((card) => {
+            // Store the original data for filtering later
+            let allTokenIds = [];
+
+            if (card.ids) {
+              if (typeof card.ids === "string") {
+                try {
+                  allTokenIds = Array.isArray(JSON.parse(card.ids))
+                    ? JSON.parse(card.ids)
+                    : [JSON.parse(card.ids)];
+                } catch {
+                  const split = card.ids.split(",").map((id) => id.trim());
+                  allTokenIds = split.length > 0 ? split : [card.ids];
+                }
+              } else if (Array.isArray(card.ids)) {
+                allTokenIds = card.ids;
+              } else {
+                allTokenIds = [card.ids];
+              }
+            }
+
+            const listedTokenIds = Array.isArray(card.user_listed_token_ids)
+              ? card.user_listed_token_ids.map((id) => String(id))
+              : [];
+
+            const allTokenIdsNormalized = allTokenIds.map((id) => String(id));
+
+            return {
+              ...card,
+              ids: allTokenIds,
+              count: allTokenIds.length || card.count,
+              _listed_token_ids: listedTokenIds,
+              _not_listed_token_ids: allTokenIdsNormalized.filter(
+                (id) => !listedTokenIds.includes(id)
+              ),
+            };
+          });
+
+          // Fix: Set real_value to 0 if last_sold is null/N/A
+          allCards = allCards.map((card) => ({
+            ...card,
+            real_value:
+              card.last_sold === null || card.last_sold === undefined
+                ? 0
+                : card.real_value,
+          }));
+
+          updateSummary(data.summary);
+          populateFilters();
+          applyFilters();
+
+          document.getElementById("summarySection").style.display = "grid";
+          document.getElementById("viewControls").style.display = "flex";
+        } catch (error) {
+          alert("Error: " + error.message);
+          console.error(error);
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      // Update summary cards
+      function updateSummary(summary) {
+        document.getElementById("totalCards").textContent = (
+          summary.total_cards || 0
+        ).toLocaleString();
+        document.getElementById("uniqueCards").textContent = (
+          summary.unique_cards || 0
+        ).toLocaleString();
+        document.getElementById("listingValue").textContent = formatCurrency(
+          summary.total_listing_value || 0
+        );
+        document.getElementById("lastSoldValue").textContent = formatCurrency(
+          summary.total_last_sold_value || 0
+        );
+        document.getElementById("bidValue").textContent = formatCurrency(
+          summary.total_bid_value || 0
+        );
+        document.getElementById("realValue").textContent = formatCurrency(
+          summary.total_real_value || 0
+        );
+
+        const avgSpread = summary.avg_bid_spread_pct;
+        document.getElementById("avgDiffPct").textContent =
+          avgSpread !== null && avgSpread !== undefined
+            ? (typeof avgSpread === "number"
+                ? avgSpread.toFixed(2)
+                : avgSpread) + "%"
+            : "N/A";
+      }
+      // Populate filter dropdowns
+      function populateFilters() {
+        const gods = new Set();
+        const sets = new Set();
+        const rarities = new Set();
+        const qualities = new Set();
+
+        allCards.forEach((card) => {
+          const meta = card.metadata || {};
+          if (meta.God) gods.add(meta.God);
+          if (meta.Set) sets.add(meta.Set);
+          if (meta.Rarity) rarities.add(meta.Rarity);
+          if (meta.Quality) qualities.add(meta.Quality);
+        });
+
+        populateSelect("godFilter", Array.from(gods).sort());
+        populateSelect("setFilter", Array.from(sets).sort());
+        populateSelect("rarityFilter", Array.from(rarities).sort());
+        populateSelect("qualityFilter", Array.from(qualities).sort());
+      }
+
+      function populateSelect(id, options) {
+        const select = document.getElementById(id);
+        const currentValue = select.value;
+        select.innerHTML = `<option value="">All ${id.replace(
+          "Filter",
+          ""
+        )}s</option>`;
+        options.forEach((opt) => {
+          const option = document.createElement("option");
+          option.value = opt;
+          option.textContent = opt;
+          select.appendChild(option);
+        });
+        select.value = currentValue;
+      }
+
+      // Apply filters
+      function applyFilters() {
+        const godFilter = document.getElementById("godFilter").value;
+        const setFilter = document.getElementById("setFilter").value;
+        const rarityFilter = document.getElementById("rarityFilter").value;
+        const qualityFilter = document.getElementById("qualityFilter").value;
+        const statusFilter = document.getElementById("statusFilter").value;
+        const searchTerm = document
+          .getElementById("cardSearch")
+          .value.toLowerCase();
+
+        const hasListing = document.querySelector(
+          "#hasListingFilter input"
+        ).checked;
+        const hasHistorical = document.querySelector(
+          "#hasHistoricalFilter input"
+        ).checked;
+        const hasBid = document.querySelector("#hasBidFilter input").checked;
+        const noListing = document.querySelector(
+          "#noListingFilter input"
+        ).checked;
+        const noHistorical = document.querySelector(
+          "#noHistoricalFilter input"
+        ).checked;
+        const noBid = document.querySelector("#noBidFilter input").checked;
+        const marketFilter = document.getElementById("marketFilter").value;
+
+        // First, split cards if market filter is active
+        let cardsToProcess = allCards;
+
+        if (marketFilter === "listed" || marketFilter === "not-listed") {
+          const splitCards = [];
+          allCards.forEach((card) => {
+            const listedTokenIds = card._listed_token_ids || [];
+            const notListedTokenIds = card._not_listed_token_ids || [];
+
+            if (marketFilter === "listed" && listedTokenIds.length > 0) {
+              splitCards.push({
+                ...card,
+                ids: listedTokenIds,
+                count: listedTokenIds.length,
+                is_listed_portion: true,
+              });
+            } else if (
+              marketFilter === "not-listed" &&
+              notListedTokenIds.length > 0
+            ) {
+              splitCards.push({
+                ...card,
+                ids: notListedTokenIds,
+                count: notListedTokenIds.length,
+                is_listed_portion: false,
+              });
+            }
+          });
+          cardsToProcess = splitCards;
+        }
+
+        filteredCards = cardsToProcess.filter((card) => {
+          const meta = card.metadata || {};
+
+          // Dropdown filters
+          if (godFilter && meta.God !== godFilter) return false;
+          if (setFilter && meta.Set !== setFilter) return false;
+          if (rarityFilter && meta.Rarity !== rarityFilter) return false;
+          if (qualityFilter && meta.Quality !== qualityFilter) return false;
+
+          // Status filter
+          if (statusFilter === "lowest" && card.listing_status !== "lowest")
+            return false;
+          if (statusFilter === "undercut" && card.listing_status !== "undercut")
+            return false;
+          if (statusFilter === "none" && card.listing_status !== null)
+            return false;
+
+          // Data availability filters
+          if (hasListing && !card.lowest_price) return false;
+          if (hasHistorical && !card.last_sold) return false;
+          if (hasBid && !card.highest_bid) return false;
+          if (noListing && card.lowest_price) return false;
+          if (noHistorical && card.last_sold) return false;
+          if (noBid && card.highest_bid) return false;
+
+          // Search filter
+          if (searchTerm && !meta.name?.toLowerCase().includes(searchTerm))
+            return false;
+
+          return true;
+        });
+
+        // Update active state on checkboxes
+        document.querySelectorAll(".checkbox-filter").forEach((filter) => {
+          const isChecked = filter.querySelector("input").checked;
+          filter.classList.toggle("active", isChecked);
+        });
+
+        // Update filtered summary
+        updateFilteredSummary();
+
+        document.getElementById("filteredCount").textContent =
+          filteredCards.length;
+        document.getElementById("totalCount").textContent = allCards.length;
+
+        // Re-apply current sort if any
+        if (currentSort.column) {
+          sortTable(currentSort.column, true);
+        } else {
+          renderCards();
+        }
+
+        // Update selection UI after filtering
+        updateSelectionUI();
+        updateCardCheckboxes();
+      }
+      // Update summary based on filtered data
+      function updateFilteredSummary() {
+        // Calculate totals based on filtered cards
+        const marketFilter = document.getElementById("marketFilter").value;
+        const totalCards = filteredCards.reduce((sum, c) => {
+          // Since cards are already split, just use count
+          return sum + (c.count || 1);
+        }, 0);
+        const uniqueCards = filteredCards.length;
+
+        const totalListingValue = filteredCards.reduce(
+          (sum, c) => sum + (c.total_listing_value || 0),
+          0
+        );
+        const totalBidValue = filteredCards.reduce(
+          (sum, c) => sum + (c.total_bid_value || 0),
+          0
+        );
+        const totalLastSoldValue = filteredCards.reduce(
+          (sum, c) => sum + (c.total_last_sold_value || 0),
+          0
+        );
+        const totalRealValue = filteredCards.reduce(
+          (sum, c) => sum + (c.total_real_value || 0),
+          0
+        );
+
+        const lowestCount = filteredCards.filter(
+          (c) => c.listing_status === "lowest"
+        ).length;
+        const undercutCount = filteredCards.filter(
+          (c) => c.listing_status === "undercut"
+        ).length;
+
+        const spreads = filteredCards
+          .filter((c) => c.bid_spread_pct != null)
+          .map((c) => c.bid_spread_pct);
+        const avgSpread =
+          spreads.length > 0
+            ? spreads.reduce((a, b) => a + b, 0) / spreads.length
+            : null;
+
+        // Update summary display
+        document.getElementById("totalCards").textContent =
+          totalCards.toLocaleString();
+        document.getElementById("uniqueCards").textContent =
+          uniqueCards.toLocaleString();
+        document.getElementById("listingValue").textContent =
+          formatCurrency(totalListingValue);
+        document.getElementById("lastSoldValue").textContent =
+          formatCurrency(totalLastSoldValue);
+        document.getElementById("bidValue").textContent =
+          formatCurrency(totalBidValue);
+        document.getElementById("realValue").textContent =
+          formatCurrency(totalRealValue);
+        document.getElementById("avgDiffPct").textContent = avgSpread
+          ? avgSpread.toFixed(2) + "%"
+          : "N/A";
+      }
+
+      // Sort table
+      function sortTable(column, keepDirection = false) {
+        if (!keepDirection) {
+          if (currentSort.column === column) {
+            currentSort.direction =
+              currentSort.direction === "asc" ? "desc" : "asc";
+          } else {
+            currentSort.column = column;
+            currentSort.direction = "asc";
+          }
+        }
+
+        filteredCards.sort((a, b) => {
+          let aVal, bVal;
+
+          if (column === "name") {
+            aVal = (a.metadata?.name || "").toLowerCase();
+            bVal = (b.metadata?.name || "").toLowerCase();
+          } else if (column === "status") {
+            const statusOrder = { lowest: 1, undercut: 2, null: 3 };
+            aVal = statusOrder[a.listing_status] || 3;
+            bVal = statusOrder[b.listing_status] || 3;
+          } else {
+            aVal = a[column] ?? -Infinity;
+            bVal = b[column] ?? -Infinity;
+          }
+
+          if (aVal < bVal) return currentSort.direction === "asc" ? -1 : 1;
+          if (aVal > bVal) return currentSort.direction === "asc" ? 1 : -1;
+          return 0;
+        });
+
+        // Update table headers
+        document.querySelectorAll(".cards-table th").forEach((th) => {
+          th.classList.remove("sorted-asc", "sorted-desc");
+        });
+        const sortedHeader = Array.from(
+          document.querySelectorAll(".cards-table th")
+        ).find((th) =>
+          th.textContent.toLowerCase().includes(column.replace("_", " "))
+        );
+        if (sortedHeader) {
+          sortedHeader.classList.add(
+            currentSort.direction === "asc" ? "sorted-asc" : "sorted-desc"
+          );
+        }
+
+        renderCards();
+      }
+
+      // Render cards in both views
+      function renderCards() {
+        renderGridView();
+        renderListView();
+        updateCardCheckboxes(); // Update checkboxes after rendering
+      }
+
+      // Render grid view
+      function renderGridView() {
+        const grid = document.getElementById("cardsGrid");
+        grid.innerHTML = "";
+
+        filteredCards.forEach((card) => {
+          const meta = card.metadata || {};
+          // Construct Gods Unchained image URL from proto
+          const imageUrl =
+            meta.img ||
+            `https://card.godsunchained.com/?id=${card.proto}&q=${
+              meta.Quality || "plain"
+            }`;
+
+          const statusHtml = card.listing_status
+            ? `<span class="status-badge ${card.listing_status}">${card.listing_status}</span>`
+            : "";
+
+          const cardKey = `${card.proto}_${card.quality}`;
+          const isSelected = selectedCards.has(cardKey);
+
+          const cardDiv = document.createElement("div");
+          cardDiv.className = "card-item";
+          cardDiv.onclick = () => showCardDetail(card);
+          cardDiv.innerHTML = `
+          <input type="checkbox" 
+    class="card-checkbox" 
+    data-card-key="${cardKey}"
+    ${isSelected ? "checked" : ""}
+    onclick="event.stopPropagation(); toggleCardSelection('${cardKey}', '${cardKey}', event)">
+                    <div class="card-header">
+                        <img src="${imageUrl}" alt="${
+            meta.name || "Card"
+          }" class="card-image" onerror="this.src='https://card.godsunchained.com/?id=${
+            card.proto
+          }&q=plain'">
+                        <div class="card-info">
+                            <div class="card-name">
+                              ${meta.name || "Unknown"}
+                              ${
+                                card.is_listed_portion === true
+                                  ? '<span style="margin-left: 8px; padding: 2px 6px; background: rgba(74, 222, 128, 0.15); border: 1px solid rgba(74, 222, 128, 0.3); border-radius: 4px; font-size: 10px; color: var(--success); font-weight: 600;">LISTED</span>'
+                                  : ""
+                              }
+                              ${
+                                card.is_listed_portion === false
+                                  ? '<span style="margin-left: 8px; padding: 2px 6px; background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 4px; font-size: 10px; color: var(--muted); font-weight: 600;">NOT LISTED</span>'
+                                  : ""
+                              }
+                            </div>
+                            <div class="card-meta">${meta.God || ""} • ${
+            meta.Rarity || ""
+          }</div>
+                        </div>
+                    </div>
+                    <div class="card-stats">
+                        ${
+                          card.listing_status
+                            ? `<div class="card-stat">
+                            <span class="card-stat-label">Status</span>
+                            ${statusHtml}
+                        </div>`
+                            : ""
+                        }
+                        <div class="card-stat">
+                            <span class="card-stat-label">Count</span>
+                            <span class="card-stat-value">${
+                              card.count || 1
+                            }</span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="card-stat-label">Floor Price</span>
+                            <span class="card-stat-value" style="color: var(--accent);">${formatCurrency(
+                              card.lowest_price
+                            )}</span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="card-stat-label">Last Sold</span>
+                            <span class="card-stat-value" style="color: var(--warning);">${formatCurrency(
+                              card.last_sold
+                            )}</span>
+                        </div>
+                        <div class="card-stat">
+                            <span class="card-stat-label">Real Value</span>
+                            <span class="card-stat-value" style="font-weight: 700;">${formatCurrency(
+                              card.real_value
+                            )}</span>
+                        </div>
+                    </div>
+                `;
+          grid.appendChild(cardDiv);
+        });
+        updateSelectionUI();
+      }
+
+      // Render list view
+      function renderListView() {
+        const tbody = document.getElementById("cardsListBody");
+        tbody.innerHTML = "";
+
+        filteredCards.forEach((card) => {
+          const meta = card.metadata || {};
+          // Construct Gods Unchained image URL from proto
+          const imageUrl =
+            meta.img ||
+            `https://card.godsunchained.com/?id=${card.proto}&q=${
+              meta.Quality || "plain"
+            }`;
+
+          const statusHtml = card.listing_status
+            ? `<span class="status-badge ${card.listing_status}">${card.listing_status}</span>`
+            : "-";
+
+          const spreadPct = card.bid_spread_pct;
+          const spreadColor =
+            spreadPct > 50
+              ? "var(--danger)"
+              : spreadPct > 20
+              ? "var(--warning)"
+              : "inherit";
+
+          const cardKey = `${card.proto}_${card.quality}`;
+          const isSelected = selectedCards.has(cardKey);
+
+          const row = document.createElement("tr");
+          row.onclick = () => showCardDetail(card);
+          row.innerHTML = `
+                    <td style="text-align: center; width: 50px;">
+                        <input type="checkbox" 
+                          class="list-checkbox" 
+                          data-card-key="${cardKey}"
+                          ${isSelected ? "checked" : ""}
+                          onclick="event.stopPropagation(); toggleCardSelection('${cardKey}', '${cardKey}', event)">
+                    </td>
+                    <td>
+                        <div class="card-cell">
+                            <img src="${imageUrl}" alt="${
+            meta.name || "Card"
+          }" class="card-image" style="width: 80px; height: 80px;" onerror="this.src='https://card.godsunchained.com/?id=${
+            card.proto
+          }&q=plain'">
+                            <div>
+                                <div style="font-weight: 600; font-size: 14px;">
+                                  ${meta.name || "Unknown"}
+                                  ${
+                                    card.is_listed_portion === true
+                                      ? '<span style="margin-left: 8px; padding: 2px 6px; background: rgba(74, 222, 128, 0.15); border: 1px solid rgba(74, 222, 128, 0.3); border-radius: 4px; font-size: 9px; color: var(--success); font-weight: 600;">LISTED</span>'
+                                      : ""
+                                  }
+                                  ${
+                                    card.is_listed_portion === false
+                                      ? '<span style="margin-left: 8px; padding: 2px 6px; background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 4px; font-size: 9px; color: var(--muted); font-weight: 600;">NOT LISTED</span>'
+                                      : ""
+                                  }
+                                </div>
+                                <div style="font-size: 11px; color: var(--muted);">${
+                                  meta.God || ""
+                                } • ${meta.Set || ""} • ${
+            meta.Rarity || ""
+          }</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${card.count || 1}</td>
+                    <td>${statusHtml}</td>
+                    <td style="color: var(--accent); font-weight: 600;">${formatCurrency(
+                      card.lowest_price
+                    )}</td>
+                    <td style="color: var(--warning);">${formatCurrency(
+                      card.last_sold
+                    )}</td>
+                    <td style="color: var(--success); font-weight: 600;">${formatCurrency(
+                      card.highest_bid
+                    )}</td>
+                    <td style="font-weight: 600;">${formatCurrency(
+                      card.real_value
+                    )}</td>
+                    <td style="color: ${spreadColor}; font-weight: 600; font-size: 14px;">
+                        ${
+                          spreadPct !== null && spreadPct !== undefined
+                            ? spreadPct.toFixed(2) + "%"
+                            : "N/A"
+                        }
+                    </td>
+                `;
+
+          tbody.appendChild(row);
+        });
+      }
+
+      // Show card detail modal
+      function showCardDetail(card) {
+        const meta = card.metadata || {};
+        document.getElementById("modalTitle").textContent =
+          meta.name || "Card Details";
+
+        // Construct card image URL
+        const imageUrl =
+          meta.img ||
+          `https://card.godsunchained.com/?id=${card.proto}&q=${
+            meta.Quality || "plain"
+          }`;
+
+        // Get icon and color based on God
+        const godIcons = {
+          light: {
+            icon: "☀️",
+            color: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+          },
+          death: {
+            icon: "💀",
+            color: "linear-gradient(135deg, #6366f1, #4f46e5)",
+          },
+          nature: {
+            icon: "🌿",
+            color: "linear-gradient(135deg, #10b981, #059669)",
+          },
+          war: {
+            icon: "⚔️",
+            color: "linear-gradient(135deg, #ef4444, #dc2626)",
+          },
+          magic: {
+            icon: "✨",
+            color: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+          },
+          deception: {
+            icon: "🗡️",
+            color: "linear-gradient(135deg, #06b6d4, #0891b2)",
+          },
+          neutral: {
+            icon: "⚪",
+            color: "linear-gradient(135deg, #94a3b8, #64748b)",
+          },
+        };
+        const godData = godIcons[(meta.God || "").toLowerCase()] || {
+          icon: "❓",
+          color: "linear-gradient(135deg, #64748b, #475569)",
+        };
+
+        // Get icon and color based on Set
+        const setIcons = {
+          genesis: {
+            icon: "🌟",
+            color: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+          },
+          core: {
+            icon: "⭐",
+            color: "linear-gradient(135deg, #3b82f6, #2563eb)",
+          },
+          etherbots: {
+            icon: "🤖",
+            color: "linear-gradient(135deg, #06b6d4, #0891b2)",
+          },
+          trial: {
+            icon: "🏛️",
+            color: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+          },
+          order: {
+            icon: "📜",
+            color: "linear-gradient(135deg, #ec4899, #db2777)",
+          },
+          totg: {
+            icon: "⚡",
+            color: "linear-gradient(135deg, #f97316, #ea580c)",
+          },
+          verdict: {
+            icon: "⚖️",
+            color: "linear-gradient(135deg, #14b8a6, #0d9488)",
+          },
+          divine: {
+            icon: "👑",
+            color: "linear-gradient(135deg, #a855f7, #9333ea)",
+          },
+          mortal: {
+            icon: "🛡️",
+            color: "linear-gradient(135deg, #84cc16, #65a30d)",
+          },
+          promo: {
+            icon: "🎁",
+            color: "linear-gradient(135deg, #f43f5e, #e11d48)",
+          },
+          guardians: {
+            icon: "🏰",
+            color: "linear-gradient(135deg, #6366f1, #4f46e5)",
+          },
+        };
+        const setData = setIcons[(meta.Set || "").toLowerCase()] || {
+          icon: "📦",
+          color: "linear-gradient(135deg, #64748b, #475569)",
+        };
+
+        // Get icon and color based on Rarity
+        const rarityIcons = {
+          common: {
+            icon: "⚪",
+            color: "linear-gradient(135deg, #94a3b8, #64748b)",
+          },
+          rare: {
+            icon: "🔵",
+            color: "linear-gradient(135deg, #3b82f6, #2563eb)",
+          },
+          epic: {
+            icon: "🟣",
+            color: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+          },
+          legendary: {
+            icon: "🟠",
+            color: "linear-gradient(135deg, #f97316, #ea580c)",
+          },
+          mythic: {
+            icon: "🔴",
+            color: "linear-gradient(135deg, #ef4444, #dc2626)",
+          },
+        };
+        const rarityData = rarityIcons[(meta.Rarity || "").toLowerCase()] || {
+          icon: "⚪",
+          color: "linear-gradient(135deg, #64748b, #475569)",
+        };
+
+        // Get icon and color based on Quality
+        const qualityIcons = {
+          plain: {
+            icon: "⬜",
+            color: "linear-gradient(135deg, #71717a, #52525b)",
+          },
+          meteorite: {
+            icon: "🟤",
+            color: "linear-gradient(135deg, #92400e, #78350f)",
+          },
+          shadow: {
+            icon: "⬛",
+            color: "linear-gradient(135deg, #18181b, #09090b)",
+          },
+          gold: {
+            icon: "🟡",
+            color: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+          },
+          diamond: {
+            icon: "💎",
+            color: "linear-gradient(135deg, #06b6d4, #0891b2)",
+          },
+        };
+        const qualityData = qualityIcons[
+          (meta.Quality || "").toLowerCase()
+        ] || { icon: "⬜", color: "linear-gradient(135deg, #64748b, #475569)" };
+
+        const body = document.getElementById("modalBody");
+        body.innerHTML = `
+        <!-- Card Image Section -->
+        <div style="text-align: center; margin-bottom: 24px;">
+            <img src="${imageUrl}" 
+                 alt="${meta.name || "Card"}" 
+                 style="max-width: 280px; width: 100%; height: auto; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);"
+                 onerror="this.src='https://card.godsunchained.com/?id=${
+                   card.proto
+                 }&q=plain'">
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-section-title">Card Info</div>
+            <div style="display: flex; justify-content: space-around; align-items: center; gap: 16px; padding: 16px; background: rgba(255, 255, 255, 0.02); border-radius: 8px;">
+                <div class="info-icon-wrapper">
+                    <div class="info-icon" style="background: ${
+                      godData.color
+                    };">
+                        <span style="font-size: 24px;">${godData.icon}</span>
+                    </div>
+                    <div class="info-tooltip">God<br><strong>${
+                      meta.God || "N/A"
+                    }</strong></div>
+                </div>
+                
+                <div class="info-icon-wrapper">
+                    <div class="info-icon" style="background: ${
+                      setData.color
+                    };">
+                        <span style="font-size: 24px;">${setData.icon}</span>
+                    </div>
+                    <div class="info-tooltip">Set<br><strong>${
+                      meta.Set || "N/A"
+                    }</strong></div>
+                </div>
+                
+                <div class="info-icon-wrapper">
+                    <div class="info-icon" style="background: ${
+                      rarityData.color
+                    };">
+                        <span style="font-size: 24px;">${rarityData.icon}</span>
+                    </div>
+                    <div class="info-tooltip">Rarity<br><strong>${
+                      meta.Rarity || "N/A"
+                    }</strong></div>
+                </div>
+                
+                <div class="info-icon-wrapper">
+                    <div class="info-icon" style="background: ${
+                      qualityData.color
+                    };">
+                        <span style="font-size: 24px;">${
+                          qualityData.icon
+                        }</span>
+                    </div>
+                    <div class="info-tooltip">Quality<br><strong>${
+                      meta.Quality || "N/A"
+                    }</strong></div>
+                </div>
+                
+                <div class="info-icon-wrapper">
+                    <div class="info-icon" style="background: linear-gradient(135deg, #ec4899, #db2777);">
+                        <span class="icon-text">${card.count}</span>
+                    </div>
+                    <div class="info-tooltip">Count Owned<br><strong>${
+                      card.count
+                    }</strong></div>
+                </div>
+            </div>
+            
+        </div>
+        ${(() => {
+          // Parse ids - handle both string and array formats
+          let tokenIds = [];
+          if (card.ids) {
+            if (typeof card.ids === "string") {
+              try {
+                tokenIds = JSON.parse(card.ids);
+              } catch (e) {
+                // If not JSON, try splitting by comma
+                tokenIds = card.ids.split(",").map((id) => id.trim());
+              }
+            } else if (Array.isArray(card.ids)) {
+              tokenIds = card.ids;
+            }
+          }
+
+          return tokenIds && tokenIds.length > 0
+            ? `
+        <div class="detail-section">
+            <div class="detail-section-title">Token IDs (${
+              tokenIds.length
+            } total)</div>
+            <div style="max-height: 200px; overflow-y: auto; background: rgba(255, 255, 255, 0.02); padding: 12px; border-radius: 8px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; font-size: 12px; font-family: 'Courier New', monospace;">
+                    ${tokenIds
+                      .map(
+                        (id) => `
+                        <div style="padding: 6px 10px; background: rgba(125, 211, 252, 0.1); border: 1px solid rgba(125, 211, 252, 0.2); border-radius: 6px; color: var(--accent); cursor: pointer;" 
+                             onclick="copyToClipboard('${id}', this)" 
+                             title="Click to copy">
+                            ${id}
+                            <span class="copy-icon" style="font-size: 10px; margin-left: 4px;">📋</span>
+                        </div>
+                    `
+                      )
+                      .join("")}
+                </div>
+            </div>
+        </div>
+        `
+            : "";
+        })()}
+        
+        <div class="detail-section">
+            <div class="detail-section-title">Pricing Summary</div>
+            <div class="detail-list">
+                <div class="detail-item">
+                    <span>Floor Price</span>
+                    <span class="detail-price">${formatCurrency(
+                      card.lowest_price
+                    )}</span>
+                </div>
+                <div class="detail-item">
+                    <span>Highest Bid</span>
+                    <span style="color: var(--success);">${formatCurrency(
+                      card.highest_bid
+                    )}</span>
+                </div>
+                <div class="detail-item">
+                    <span>Last Sold</span>
+                    <span style="color: var(--warning);">${formatCurrency(
+                      card.last_sold
+                    )}</span>
+                </div>
+                <div class="detail-item">
+                    <span>Real Value (per card)</span>
+                    <span>${formatCurrency(card.real_value)}</span>
+                </div>
+                <div class="detail-item">
+                    <span>Total Real Value (×${card.count})</span>
+                    <span style="font-weight: 700;">${formatCurrency(
+                      card.total_real_value
+                    )}</span>
+                </div>
+                <div class="detail-item">
+                    <span>Bid Spread</span>
+                    <span style="color: ${
+                      card.bid_spread_pct > 20 ? "var(--danger)" : "inherit"
+                    };">
+                        ${
+                          card.bid_spread_pct
+                            ? card.bid_spread_pct + "%"
+                            : "N/A"
+                        }
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        ${
+          card.historical && card.historical.length > 0
+            ? `
+        <div class="detail-section">
+            <div class="detail-section-title">Price History (Last ${card.historical.length} Sales)</div>
+            <div style="background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                <canvas id="priceHistoryChart" style="max-height: 250px;"></canvas>
+            </div>
+            <div style="font-size: 12px; color: var(--muted); text-align: center;">
+                📊 Historical sales data • Hover over points for details
+            </div>
+        </div>
+        `
+            : `
+        <div class="detail-section">
+            <div class="detail-section-title">Price History</div>
+            <div style="text-align: center; padding: 40px; color: var(--muted);">
+                No historical sales data available
+            </div>
+        </div>
+        `
+        }
+        
+        ${
+          card.listings && card.listings.length > 0
+            ? `
+        <div class="detail-section">
+    <div class="detail-section-title">Top Listings</div>
+    <div class="detail-list">
+        ${card.listings
+          .slice(0, 5)
+          .map(
+            (l) => `
+            <div class="detail-item">
+                <span class="detail-address copyable" onclick="copyToClipboard('${
+                  l.makerAddress
+                }', this)" title="Click to copy full address">
+                    ${shortenAddress(l.makerAddress)}
+                    <span class="copy-icon">📋</span>
+                </span>
+                <span class="detail-price">${formatCurrency(l.usd_price)}</span>
+            </div>
+        `
+          )
+          .join("")}
+    </div>
+</div>
+        `
+            : ""
+        }
+        
+        ${
+          card.offers && card.offers.length > 0
+            ? `
+        <div class="detail-section">
+    <div class="detail-section-title">Top Offers</div>
+    <div class="detail-list">
+        ${card.offers
+          .slice(0, 5)
+          .map(
+            (o) => `
+            <div class="detail-item">
+                <span class="detail-address copyable" onclick="copyToClipboard('${
+                  o.makerAddress
+                }', this)" title="Click to copy full address">
+                    ${shortenAddress(o.makerAddress)}
+                    <span class="copy-icon">📋</span>
+                </span>
+                <span style="color: var(--success);">${formatCurrency(
+                  o.usd_price
+                )}</span>
+            </div>
+        `
+          )
+          .join("")}
+    </div>
+</div>
+        `
+            : ""
+        }
+    `;
+
+        document.getElementById("cardModal").classList.add("active");
+
+        // Render chart if historical data exists
+        if (card.historical && card.historical.length > 0) {
+          setTimeout(() => renderPriceChart(card.historical), 100);
+        }
+      }
+
+      async function viewSalesHistory() {
+        const wallet = document.getElementById("walletInput").value.trim();
+        if (!wallet) {
+          alert("Please enter a wallet address first");
+          return;
+        }
+
+        showLoading(true);
+
+        try {
+          const response = await fetch(`${API_BASE}/sales/${wallet}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            displaySalesHistory(data);
+          } else {
+            alert("Error loading sales history: " + data.error);
+          }
+        } catch (error) {
+          console.error("Sales error:", error);
+          alert("Failed to load sales history");
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      function displaySalesHistory(data) {
+        const summary = data.summary;
+        const sales = data.all_sales;
+
+        alert(`Sales History:
+    
+Total Sales: ${summary.total_sales}
+Unique Cards Sold: ${summary.unique_cards_sold}
+Total Value: ${summary.total_value_eth.toFixed(
+          4
+        )} ETH ($${summary.total_value_usd.toFixed(2)})
+
+Top 5 Sales:
+${sales
+  .slice(0, 5)
+  .map((s, i) => `${i + 1}. ${s.card_name}: $${s.price_usd.toFixed(2)}`)
+  .join("\n")}
+    `);
+
+        console.log("Full sales data:", data);
+      }
+
+      function copyToClipboard(text, element) {
+        // Use the Clipboard API
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            // Show success feedback
+            const copyIcon = element.querySelector(".copy-icon");
+            const originalIcon = copyIcon.textContent;
+            copyIcon.textContent = "✅";
+            copyIcon.style.color = "var(--success)";
+
+            // Show tooltip
+            const tooltip = document.createElement("div");
+            tooltip.className = "copy-tooltip";
+            tooltip.textContent = "Copied!";
+            element.appendChild(tooltip);
+
+            // Reset after 2 seconds
+            setTimeout(() => {
+              copyIcon.textContent = originalIcon;
+              copyIcon.style.color = "";
+              tooltip.remove();
+            }, 2000);
+          })
+          .catch((err) => {
+            console.error("Failed to copy:", err);
+            alert("Failed to copy address");
+          });
+      }
+      // Close modal
+      function closeModal() {
+        document.getElementById("cardModal").classList.remove("active");
+        // Destroy chart when closing modal
+        if (window.priceChart) {
+          window.priceChart.destroy();
+          window.priceChart = null;
+        }
+      }
+      function renderPriceChart(historical) {
+        const ctx = document.getElementById("priceHistoryChart");
+        if (!ctx) return;
+
+        // Sort by date (oldest to newest)
+        const sortedData = [...historical].sort(
+          (a, b) => new Date(a.updated_at) - new Date(b.updated_at)
+        );
+
+        const labels = sortedData.map((sale) => {
+          const date = new Date(sale.updated_at);
+          return date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
+        });
+
+        const prices = sortedData.map((sale) => sale.usd_price);
+
+        // Destroy existing chart if any
+        if (window.priceChart) {
+          window.priceChart.destroy();
+        }
+
+        window.priceChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Sale Price (USD)",
+                data: prices,
+                borderColor: "#7dd3fc",
+                backgroundColor: "rgba(125, 211, 252, 0.1)",
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointBackgroundColor: "#7dd3fc",
+                pointBorderColor: "#0a0f1a",
+                pointBorderWidth: 2,
+                pointHoverBackgroundColor: "#60a5fa",
+                pointHoverBorderColor: "#7dd3fc",
+                pointHoverBorderWidth: 3,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+              intersect: false,
+              mode: "index",
+            },
+            plugins: {
+              legend: {
+                display: false,
+              },
+              tooltip: {
+                backgroundColor: "rgba(15, 23, 42, 0.95)",
+                titleColor: "#f1f5f9",
+                bodyColor: "#94a3b8",
+                borderColor: "rgba(255, 255, 255, 0.08)",
+                borderWidth: 1,
+                padding: 12,
+                displayColors: false,
+                callbacks: {
+                  title: function (context) {
+                    const index = context[0].dataIndex;
+                    const date = new Date(sortedData[index].updated_at);
+                    return date.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+                  },
+                  label: function (context) {
+                    return "Price: $" + context.parsed.y.toFixed(2);
+                  },
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: false,
+                ticks: {
+                  color: "#94a3b8",
+                  callback: function (value) {
+                    return "$" + value.toFixed(2);
+                  },
+                },
+                grid: {
+                  color: "rgba(255, 255, 255, 0.05)",
+                  drawBorder: false,
+                },
+              },
+              x: {
+                ticks: {
+                  color: "#94a3b8",
+                  maxRotation: 45,
+                  minRotation: 45,
+                },
+                grid: {
+                  display: false,
+                },
+              },
+            },
+          },
+        });
+      }
+      // Toggle portfolio dropdown
+      function togglePortfolioDropdown() {
+        const dropdown = document.getElementById("portfolioDropdown");
+        const isActive = dropdown.classList.contains("active");
+
+        if (isActive) {
+          dropdown.classList.remove("active");
+        } else {
+          loadPortfolio();
+          dropdown.classList.add("active");
+        }
+      }
+
+      function closePortfolioDropdown() {
+        document.getElementById("portfolioDropdown").classList.remove("active");
+        document.getElementById("portfolioOverlay").classList.remove("active");
+      }
+
+      // Load portfolio summary
+      async function loadPortfolio() {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        try {
+          const response = await fetch(`${API_BASE}/portfolio`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            updatePortfolioUI(data.portfolio);
+          }
+        } catch (error) {
+          console.error("Error loading portfolio:", error);
+        }
+      }
+
+      function updatePortfolioUI(portfolio) {
+        // Update header value
+        document.getElementById(
+          "totalPortfolioValue"
+        ).textContent = `$${portfolio.total_value_usd.toFixed(2)}`;
+
+        // Update dropdown summary
+        document.getElementById(
+          "dropdownTotalValue"
+        ).textContent = `$${portfolio.total_value_usd.toFixed(2)}`;
+        document.getElementById("totalWallets").textContent =
+          portfolio.wallet_count;
+        document.getElementById("totalTokens").textContent =
+          portfolio.total_tokens;
+
+        // Update wallet list
+        const walletList = document.getElementById("walletList");
+
+        if (portfolio.wallets.length === 0) {
+          walletList.innerHTML = `
+      <div class="empty-wallets">
+        <div class="empty-wallets-icon">💼</div>
+        <div class="empty-wallets-text">No wallets added yet</div>
+      </div>
+    `;
+          return;
+        }
+
+        walletList.innerHTML = portfolio.wallets
+          .map(
+            (wallet) => `
+    <div class="wallet-item" data-wallet-id="${wallet.id}">
+      <div class="wallet-item-header">
+        <div class="wallet-nickname">
+          ${wallet.nickname || "Unnamed Wallet"}
+          ${
+            wallet.is_primary
+              ? '<span class="wallet-primary-badge">Primary</span>'
+              : ""
+          }
+        </div>
+      </div>
+      <div class="wallet-address">${formatAddress(wallet.wallet_address)}</div>
+      <div class="wallet-stats">
+        <div class="wallet-tokens">${wallet.token_count} token${
+              wallet.token_count !== 1 ? "s" : ""
+            }</div>
+        <div class="wallet-value">$${wallet.total_value_usd.toFixed(2)}</div>
+      </div>
+      <div class="wallet-actions">
+        <button class="wallet-action-btn" onclick="viewWalletDetails(${
+          wallet.id
+        })">
+          👁️ View
+        </button>
+        <button class="wallet-action-btn" onclick="refreshWallet(${wallet.id})">
+          🔄 Refresh
+        </button>
+        <button class="wallet-action-btn" onclick="deleteWallet(${wallet.id})">
+          🗑️ Delete
+        </button>
+      </div>
+    </div>
+  `
+          )
+          .join("");
+      }
+
+      function formatAddress(address) {
+        return `${address.slice(0, 6)}...${address.slice(-4)}`;
+      }
+
+      // Add new wallet
+      function openAddWalletModal() {
+        closePortfolioDropdown();
+        document.getElementById("addWalletModal").classList.add("active");
+      }
+
+      function closeAddWalletModal() {
+        document.getElementById("addWalletModal").classList.remove("active");
+        document.getElementById("newWalletAddress").value = "";
+        document.getElementById("newWalletNickname").value = "";
+        document.getElementById("newWalletPrimary").checked = false;
+      }
+
+      async function addNewWallet() {
+        const address = document
+          .getElementById("newWalletAddress")
+          .value.trim();
+        const nickname = document
+          .getElementById("newWalletNickname")
+          .value.trim();
+        const isPrimary = document.getElementById("newWalletPrimary").checked;
+
+        if (!address) {
+          alert("Please enter a wallet address");
+          return;
+        }
+
+        if (!address.startsWith("0x") || address.length !== 42) {
+          alert("Please enter a valid Ethereum address");
+          return;
+        }
+
+        const token = localStorage.getItem("token");
+
+        try {
+          const response = await fetch(`${API_BASE}/wallets`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              wallet_address: address,
+              nickname: nickname,
+              is_primary: isPrimary,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            closeAddWalletModal();
+            alert("✅ Wallet added successfully!");
+
+            // Refresh the wallet to get balances
+            await refreshWallet(data.wallet.id);
+            loadPortfolio();
+          } else {
+            alert("❌ " + data.error);
+          }
+        } catch (error) {
+          console.error("Error adding wallet:", error);
+          alert("❌ Failed to add wallet");
+        }
+      }
+
+      // Refresh wallet balances
+      async function refreshWallet(walletId) {
+        const walletItem = document.querySelector(
+          `[data-wallet-id="${walletId}"]`
+        );
+        if (walletItem) {
+          walletItem.classList.add("loading");
+        }
+
+        const token = localStorage.getItem("token");
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/wallets/${walletId}/refresh`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          const data = await response.json();
+
+          if (data.success) {
+            loadPortfolio();
+          } else {
+            alert("❌ " + data.error);
+          }
+        } catch (error) {
+          console.error("Error refreshing wallet:", error);
+          alert("❌ Failed to refresh wallet");
+        } finally {
+          if (walletItem) {
+            walletItem.classList.remove("loading");
+          }
+        }
+      }
+
+      // Refresh all wallets
+      async function refreshAllWallets() {
+        const token = localStorage.getItem("token");
+
+        try {
+          const response = await fetch(`${API_BASE}/portfolio`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const data = await response.json();
+
+          if (data.success && data.portfolio.wallets.length > 0) {
+            const refreshPromises = data.portfolio.wallets.map((wallet) =>
+              refreshWallet(wallet.id)
+            );
+
+            await Promise.all(refreshPromises);
+            alert("✅ All wallets refreshed!");
+          }
+        } catch (error) {
+          console.error("Error refreshing all wallets:", error);
+          alert("❌ Failed to refresh wallets");
+        }
+      }
+
+      // Delete wallet
+      async function deleteWallet(walletId) {
+        if (!confirm("Are you sure you want to delete this wallet?")) {
+          return;
+        }
+
+        const token = localStorage.getItem("token");
+
+        try {
+          const response = await fetch(`${API_BASE}/wallets/${walletId}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            alert("✅ Wallet deleted");
+            loadPortfolio();
+          } else {
+            alert("❌ " + data.error);
+          }
+        } catch (error) {
+          console.error("Error deleting wallet:", error);
+          alert("❌ Failed to delete wallet");
+        }
+      }
+
+      // View wallet details
+      async function viewWalletDetails(walletId) {
+        closePortfolioDropdown();
+
+        const token = localStorage.getItem("token");
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/wallets/${walletId}/details`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          const data = await response.json();
+
+          if (data.success) {
+            showWalletDetails(data.wallet);
+          } else {
+            alert("❌ " + data.error);
+          }
+        } catch (error) {
+          console.error("Error loading wallet details:", error);
+          alert("❌ Failed to load wallet details");
+        }
+      }
+
+      function showWalletDetails(wallet) {
+        document.getElementById("walletDetailsTitle").textContent =
+          wallet.nickname || "Wallet Details";
+
+        const tokenList = document.getElementById("tokenList");
+
+        if (wallet.tokens.length === 0) {
+          tokenList.innerHTML = `
+      <div class="empty-wallets">
+        <div class="empty-wallets-text">No tokens found</div>
+      </div>
+    `;
+        } else {
+          tokenList.innerHTML = wallet.tokens
+            .map(
+              (token) => `
+      <div class="token-item">
+        <img src="${token.icon_url}" alt="${token.symbol}" class="token-icon" 
+             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2236%22 height=%2236%22><rect width=%2236%22 height=%2236%22 fill=%22%23333%22/><text x=%2250%%22 y=%2250%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2214%22>${token.symbol.charAt(
+               0
+             )}</text></svg>'">
+        <div class="token-info">
+          <div class="token-name">${token.name}</div>
+          <div class="token-symbol">${token.symbol}</div>
+        </div>
+        <div class="token-values">
+          <div class="token-balance">${token.balance.toFixed(6)}</div>
+          <div class="token-usd">$${token.usd_value.toFixed(2)}</div>
+        </div>
+      </div>
+    `
+            )
+            .join("");
+        }
+
+        document.getElementById("walletDetailsModal").classList.add("active");
+      }
+
+      function closeWalletDetailsModal() {
+        document
+          .getElementById("walletDetailsModal")
+          .classList.remove("active");
+      }
+
+      // Load portfolio on page load
+      window.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem("token");
+        if (token) {
+          loadPortfolio();
+        }
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener("click", (e) => {
+        const dropdown = document.getElementById("portfolioDropdown");
+        const btn = document.querySelector(".portfolio-btn");
+
+        if (
+          dropdown &&
+          btn &&
+          !dropdown.contains(e.target) &&
+          !btn.contains(e.target)
+        ) {
+          closePortfolioDropdown();
+        }
+      });
+
+      // Set view mode
+      function setView(view) {
+        currentView = view;
+        document
+          .getElementById("gridBtn")
+          .classList.toggle("active", view === "grid");
+        document
+          .getElementById("listBtn")
+          .classList.toggle("active", view === "list");
+        document
+          .getElementById("cardsGrid")
+          .classList.toggle("hidden", view !== "grid");
+        document
+          .getElementById("cardsList")
+          .classList.toggle("active", view === "list");
+      }
+
+      // Show/hide loading
+      function showLoading(show) {
+        document.getElementById("loadingState").style.display = show
+          ? "flex"
+          : "none";
+        document.getElementById("loadBtn").disabled = show;
+        if (show) {
+          document.getElementById("cardsGrid").innerHTML = "";
+          document.getElementById("cardsListBody").innerHTML = "";
+        }
+      }
+
+      // Refresh prices
+      async function refreshPrices() {
+        try {
+          await fetch(`${API_BASE}/prices`);
+          alert("Prices refreshed!");
+        } catch (error) {
+          alert("Failed to refresh prices");
+        }
+      }
+
+      // Format currency
+      function formatCurrency(value) {
+        // Handle null, undefined, or non-numeric values
+        if (
+          value === null ||
+          value === undefined ||
+          isNaN(value) ||
+          value === 0
+        ) {
+          return "N/A";
+        }
+
+        const numValue = parseFloat(value);
+        if (numValue < 0.01) return `$${numValue.toFixed(6)}`;
+        if (numValue < 1) return `$${numValue.toFixed(4)}`;
+        return `$${numValue.toFixed(2)}`;
+      }
+
+      // Shorten address
+      function shortenAddress(addr) {
+        if (!addr) return "N/A";
+        return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+      }
+
+      // Close modal on overlay click
+      document.getElementById("cardModal").addEventListener("click", (e) => {
+        if (e.target.id === "cardModal") closeModal();
+      });
+
+      // Handle Enter key in wallet search
+      document
+        .getElementById("walletInput")
+        .addEventListener("keypress", (e) => {
+          if (e.key === "Enter") loadCollection();
+        });
+    </script>
+
+    <div id="marketDataModal" class="market-data-modal">
+      <div class="market-data-content">
+        <div class="market-data-header">
+          <h2>📊 Market Data for Selected Cards</h2>
+          <button class="btn" onclick="closeMarketDataModal()">✕ Close</button>
+        </div>
+
+        <div id="marketDataBody">
+          <!-- Market data will be dynamically inserted here -->
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

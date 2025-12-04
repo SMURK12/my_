@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - GU Valuator</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0f1a;
+        --panel: rgba(15, 23, 42, 0.95);
+        --border: rgba(255, 255, 255, 0.08);
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --accent: #7dd3fc;
+        --accent-2: #60a5fa;
+        --danger: #f87171;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .login-container {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 40px;
+        width: 90%;
+        max-width: 400px;
+      }
+
+      .logo {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      .logo-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+      }
+
+      .logo-text {
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--muted);
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        font-size: 14px;
+        font-family: inherit;
+        transition: all 0.2s;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+      }
+
+      .btn {
+        width: 100%;
+        padding: 14px;
+        border-radius: 10px;
+        border: none;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        color: #07102a;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 24px;
+      }
+
+      .btn:hover {
+        opacity: 0.9;
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .error-msg {
+        background: rgba(248, 113, 113, 0.1);
+        border: 1px solid var(--danger);
+        color: var(--danger);
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 16px;
+        display: none;
+      }
+
+      .toggle-form {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      .toggle-form a {
+        color: var(--accent);
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .toggle-form a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="logo">
+        <div class="logo-icon">⚔️</div>
+        <div class="logo-text">GU Valuator</div>
+      </div>
+
+      <div id="errorMsg" class="error-msg"></div>
+
+      <!-- Login Form -->
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" id="loginUsername" class="form-input" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input
+            type="password"
+            id="loginPassword"
+            class="form-input"
+            required
+          />
+        </div>
+        <button type="submit" class="btn" id="loginBtn">Login</button>
+      </form>
+
+      <!-- Register Form (hidden by default) -->
+      <form id="registerForm" style="display: none">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input
+            type="text"
+            id="registerUsername"
+            class="form-input"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input
+            type="password"
+            id="registerPassword"
+            class="form-input"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Wallet Address (optional)</label>
+          <input
+            type="text"
+            id="registerWallet"
+            class="form-input"
+            placeholder="0x..."
+          />
+        </div>
+        <button type="submit" class="btn" id="registerBtn">Register</button>
+      </form>
+
+      <div class="toggle-form">
+        <span id="toggleText"
+          >Don't have an account? <a id="toggleLink">Register</a></span
+        >
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://127.0.0.1:5000/api";
+      let isLoginMode = true;
+
+      // Toggle between login and register
+      document.getElementById("toggleLink").addEventListener("click", () => {
+        isLoginMode = !isLoginMode;
+        document.getElementById("loginForm").style.display = isLoginMode
+          ? "block"
+          : "none";
+        document.getElementById("registerForm").style.display = isLoginMode
+          ? "none"
+          : "block";
+        document.getElementById("toggleText").innerHTML = isLoginMode
+          ? 'Don\'t have an account? <a id="toggleLink">Register</a>'
+          : 'Already have an account? <a id="toggleLink">Login</a>';
+        document.getElementById("errorMsg").style.display = "none";
+
+        // Re-attach event listener
+        document
+          .getElementById("toggleLink")
+          .addEventListener("click", arguments.callee);
+      });
+
+      // Login
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const username = document.getElementById("loginUsername").value;
+          const password = document.getElementById("loginPassword").value;
+
+          document.getElementById("loginBtn").disabled = true;
+          document.getElementById("errorMsg").style.display = "none";
+
+          try {
+            const response = await fetch(`${API_BASE}/login`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username, password }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("user", JSON.stringify(data.user));
+              window.location.href = "/";
+            } else {
+              showError(data.error);
+            }
+          } catch (error) {
+            showError("Login failed. Please try again.");
+          } finally {
+            document.getElementById("loginBtn").disabled = false;
+          }
+        });
+
+      // Register
+      document
+        .getElementById("registerForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const username = document.getElementById("registerUsername").value;
+          const password = document.getElementById("registerPassword").value;
+          const wallet_address =
+            document.getElementById("registerWallet").value;
+
+          document.getElementById("registerBtn").disabled = true;
+          document.getElementById("errorMsg").style.display = "none";
+
+          try {
+            const response = await fetch(`${API_BASE}/register`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username, password, wallet_address }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("user", JSON.stringify(data.user));
+              window.location.href = "/";
+            } else {
+              showError(data.error);
+            }
+          } catch (error) {
+            showError("Registration failed. Please try again.");
+          } finally {
+            document.getElementById("registerBtn").disabled = false;
+          }
+        });
+
+      function showError(message) {
+        const errorMsg = document.getElementById("errorMsg");
+        errorMsg.textContent = message;
+        errorMsg.style.display = "block";
+      }
+
+      // Check if already logged in
+      if (localStorage.getItem("token")) {
+        window.location.href = "/";
+      }
+    </script>
+  </body>
+</html>

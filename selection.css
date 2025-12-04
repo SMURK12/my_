@@ -1,0 +1,174 @@
+/* ============================================
+   CARD SELECTION FEATURE - CSS ADDITIONS
+   Add these styles to your existing <style> section
+   ============================================ */
+
+/* Selection Controls Bar */
+.selection-controls {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.selection-count {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 600;
+  padding: 8px 16px;
+  background: rgba(125, 211, 252, 0.1);
+  border: 1px solid rgba(125, 211, 252, 0.3);
+  border-radius: 8px;
+}
+
+.selection-actions {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* Card Checkbox */
+.card-checkbox {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  z-index: 10;
+  accent-color: var(--accent);
+}
+
+.card-checkbox:checked {
+  transform: scale(1.1);
+}
+
+/* Table Checkbox Column */
+.card-cell-checkbox {
+  width: 40px;
+  text-align: center;
+}
+
+.card-cell-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+/* Selected State for Grid Cards */
+.card.selected {
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 20px rgba(125, 211, 252, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Selected State for Table Rows */
+tr.selected {
+  background: rgba(125, 211, 252, 0.1) !important;
+  border-left: 3px solid var(--accent);
+}
+
+/* Market Data Modal */
+.market-data-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.market-data-modal.active {
+  display: flex;
+}
+
+.market-data-content {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  width: 1200px;
+}
+
+.market-data-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.market-data-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.market-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.market-data-table th {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px;
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.market-data-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.market-data-table tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.copy-btn-small {
+  padding: 4px 8px;
+  font-size: 11px;
+  background: rgba(125, 211, 252, 0.1);
+  border: 1px solid rgba(125, 211, 252, 0.3);
+  border-radius: 4px;
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-family: inherit;
+}
+
+.copy-btn-small:hover {
+  background: rgba(125, 211, 252, 0.2);
+}
+
+/* Copy feedback animation */
+@keyframes slideIn {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
