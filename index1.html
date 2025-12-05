@@ -2412,7 +2412,7 @@
           // Currency-specific multipliers (INCLUDE 0.5% base undercut)
           const CURRENCY_MULTIPLIERS = {
             ETH: 0.935, // 6.5% undercut
-            GODS: 0.96, // 5.0% undercut
+            GODS: 0.946, // 5.0% undercut
             IMX: 0.915, // 8.5% undercut
             USDC: 0.99, // 1.0% undercut
           };
@@ -2489,6 +2489,18 @@
             if (decimals === 18) {
               const SDK_PRECISION = BigInt(1e12);
               finalQuantity = (targetQuantity / SDK_PRECISION) * SDK_PRECISION;
+              
+              // ✅ FIX: Ensure minimum value for very low-price cards
+              if (finalQuantity === BigInt(0) && targetQuantity > BigInt(0)) {
+                finalQuantity = SDK_PRECISION; // Minimum 1e12 wei (0.000001 ETH)
+                console.warn(`⚠️ ${card.metadata?.name}: Price too low, using minimum ${SDK_PRECISION} wei`);
+              }
+            }
+
+            // ✅ ADDITIONAL SAFETY: Ensure absolutely no 0 values
+            if (finalQuantity === BigInt(0)) {
+              finalQuantity = BigInt(1e12); // 0.000001 ETH minimum
+              console.warn(`⚠️ ${card.metadata?.name}: Price was 0, using minimum listing value`);
             }
 
             const listingQuantityString = finalQuantity.toString();
@@ -3081,7 +3093,7 @@
           // Currency configuration (same as getSelectedCardsData)
           const CURRENCY_MULTIPLIERS = {
             ETH: 0.935,
-            GODS: 0.96,
+            GODS: 0.946,
             IMX: 0.915,
             USDC: 0.99,
           };
@@ -3135,6 +3147,18 @@
             if (decimals === 18) {
               const SDK_PRECISION = BigInt(1e12);
               finalQuantity = (targetQuantity / SDK_PRECISION) * SDK_PRECISION;
+              
+              // ✅ FIX: Ensure minimum value for very low-price cards
+              if (finalQuantity === BigInt(0) && targetQuantity > BigInt(0)) {
+                finalQuantity = SDK_PRECISION;
+                console.warn(`⚠️ Card price too low, using minimum ${SDK_PRECISION} wei`);
+              }
+            }
+
+            // ✅ ADDITIONAL SAFETY: Ensure absolutely no 0 values
+            if (finalQuantity === BigInt(0)) {
+              finalQuantity = BigInt(1e12);
+              console.warn(`⚠️ Price was 0, using minimum listing value`);
             }
 
             const listingQuantityString = finalQuantity.toString();
